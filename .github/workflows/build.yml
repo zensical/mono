@@ -1,0 +1,123 @@
+# Copyright (c) 2025 Zensical and contributors
+
+# SPDX-License-Identifier: MIT
+# Third-party contributions licensed under DCO
+
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to
+# deal in the Software without restriction, including without limitation the
+# rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+# sell copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+# IN THE SOFTWARE.
+
+name: Build
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+  workflow_call:
+    inputs:
+      ref:
+        required: true
+        type: string
+
+permissions:
+  attestations: write # Required for attestations
+  id-token: write     # Required for OIDC
+
+jobs:
+  build:
+    name: Executable (${{ matrix.name }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - name: Linux, x86_64
+            os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+          - name: Linux, x86
+            os: ubuntu-latest
+            target: i686-unknown-linux-gnu
+          - name: Linux, aarch64
+            os: ubuntu-latest
+            target: aarch64-unknown-linux-gnu
+          - name: Linux, armv7
+            os: ubuntu-latest
+            target: armv7-unknown-linux-gnueabihf
+          - name: Windows, x64
+            os: windows-latest
+            target: x86_64-pc-windows-msvc
+            suffix: .exe
+          - name: Windows, x86
+            os: windows-latest
+            target: i686-pc-windows-msvc
+            suffix: .exe
+          - name: macOS, x86_64
+            os: macos-latest
+            target: x86_64-apple-darwin
+          - name: macOS, aarch64
+            os: macos-latest
+            target: aarch64-apple-darwin
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ inputs.ref || github.sha }}
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Set up Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          key: ${{ matrix.target }}
+
+      - name: Build artifact
+        run: cargo build --release --locked
+
+      - name: Create artifact archive (Unix)
+        shell: bash
+        if: runner.os != 'Windows'
+        run: |
+          mkdir -p artifacts
+          tar -czf artifacts/mono-${{ matrix.target }}.tar.gz -C \
+            target/release mono${{ matrix.suffix }}
+
+      - name: Create artifact archive (Windows)
+        shell: pwsh
+        if: runner.os == 'Windows'
+        run: |
+          mkdir -p artifacts
+          Compress-Archive `
+            -Path target/release/mono${{ matrix.suffix }} `
+            -DestinationPath artifacts/mono-${{ matrix.target }}.zip
+
+      - name: Create artifact attestation
+        uses: actions/attest-build-provenance@v1
+        with:
+          show-summary: false
+          subject-path: artifacts/*
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: mono-${{ matrix.target }}${{ matrix.suffix }}
+          path: artifacts/*

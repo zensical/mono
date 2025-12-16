@@ -41,19 +41,18 @@ jobs:
           ref: ${{ github.event.pull_request.base.sha }}
           fetch-depth: 0
 
-      - name: Set up ctrl-z
-        uses: squidfunk/ctrl-z@v0
+      - name: Set up mono
+        uses: zensical/mono@v0
 
       - name: Get commit messages
         run: |
           base="${{ github.event.pull_request.base.sha }}"
           head="${{ github.event.pull_request.head.sha }}"
-          git log "${base}..${head}" --pretty=format:"%s%n" > commits.txt
+          git log "${base}..${head}" --format=%h > commits.txt
 
       - name: Validate commit messages
         run: |
-          while IFS= read -r commit; do
-            [ -z "$commit" ] && continue
-            ctrl-z validate commit "$commit"
+          while IFS= read -r id; do
+            [ -z "$id" ] && continue
+            mono validate commit --id $id
           done < commits.txt
-

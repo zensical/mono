@@ -39,9 +39,9 @@ all = { level = "warn", priority = -1 }
 pedantic = { level = "warn", priority = -1 }
 
 [workspace.dependencies]
-mono-changeset = { version = "0.0.0", path = "crates/mono-changeset" }
-mono-project = { version = "0.0.0", path = "crates/mono-project" }
-mono-repository = { version = "0.0.0", path = "crates/mono-repository" }
+mono-changeset = { version = "0.0.1", path = "crates/mono-changeset" }
+mono-project = { version = "0.0.1", path = "crates/mono-project" }
+mono-repository = { version = "0.0.1", path = "crates/mono-repository" }
 
 clap = { version = "4.5", features = ["derive"] }
 cliclack = "0.3"
@@ -57,6 +57,3 @@ thiserror = "2.0"
 toml = "0.9"
 toml_edit = "0.23"
 zrx = "0.0.4"
-
-# zrx = { version = "0.0.4", git = "https://github.com/zensical/zrx" }
-# zrx = { version = "0.0.4", path = "../zrx/crates/zrx" }

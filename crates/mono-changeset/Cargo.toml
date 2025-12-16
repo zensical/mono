@@ -23,7 +23,7 @@
 
 [package]
 name = "mono-changeset"
-version = "0.0.0"
+version = "0.0.1"
 description = "Mono repository changeset utilities"
 edition.workspace = true
 rust-version.workspace = true

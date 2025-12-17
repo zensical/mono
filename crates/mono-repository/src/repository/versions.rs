@@ -154,6 +154,21 @@ impl Versions<'_> {
     }
 }
 
+#[allow(clippy::must_use_candidate)]
+impl Versions<'_> {
+    /// Returns the number of versions.
+    #[inline]
+    pub fn len(&self) -> usize {
+        self.tags.len()
+    }
+
+    /// Returns whether there are any versions.
+    #[inline]
+    pub fn is_empty(&self) -> bool {
+        self.tags.is_empty()
+    }
+}
+
 // ----------------------------------------------------------------------------
 // Trait implementations
 // ----------------------------------------------------------------------------

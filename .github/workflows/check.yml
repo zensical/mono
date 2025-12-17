@@ -94,11 +94,14 @@ jobs:
         uses: actions/checkout@v5
         with:
           ref: ${{ github.sha }}
+          fetch-depth: 0
 
       - name: Check commit count
         run: |
-          COUNT=$(git rev-list --count HEAD ^origin/master)
-          if [ "$COUNT" -ne 1 ]; then
-            echo "Release branch must contain exactly one commit, found $COUNT"
+          BASE="${{ github.event.pull_request.base.sha }}"
+          HEAD="${{ github.event.pull_request.head.sha }}"
+          COMMITS=$(git rev-list --count $HEAD ^$BASE)
+          if [ "$COMMITS" -ne 1 ]; then
+            echo "Release branch must contain exactly one commit, found $COMMITS"
             exit 1
           fi

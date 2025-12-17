@@ -23,7 +23,7 @@
 
 [package]
 name = "mono-project"
-version = "0.0.1"
+version = "0.0.2"
 description = "Mono repository project utilities"
 edition.workspace = true
 rust-version.workspace = true

@@ -27,9 +27,10 @@
 
 use clap::Args;
 use semver::Version;
+use std::cmp;
 
 use mono_changeset::Changeset;
-use mono_project::version::VersionExt;
+use mono_project::version::{Increment, VersionExt};
 use mono_project::Manifest;
 
 use crate::cli::{Command, Result};
@@ -66,13 +67,27 @@ where
         }
 
         // Obtain version increments, which denote which packages have changed,
-        // and traverse dependents to list changed packages in topological order
-        let increments = changeset.increments();
+        // and if a version is given, ensure that all packages that were bumped
+        // in the given version are marked as changed, since there might be
+        // transitive changes that only affect dependencies
+        let mut increments = changeset.increments().to_vec();
+        if self.version.is_some() {
+            let scopes = changeset.scopes();
+            if let Some(first) = changeset.revisions().first() {
+                for delta in first.commit().deltas()? {
+                    if let Some(node) = scopes.get(delta.path()) {
+                        increments[node] =
+                            cmp::max(increments[node], Some(Increment::Patch));
+                    }
+                }
+            }
+        }
+
+        // Traverse dependents in topological order, and write names of changed
+        // packages to standard output if they have a version increment
         let dependents = context.workspace.dependents()?;
         for node in &dependents {
-            // In case no versions have been created so far, all packages must
-            // be considered changed to be included in the initial release
-            if increments[node].is_some() || versions.is_empty() {
+            if increments[node].is_some() {
                 let name = dependents[node].name().expect("invariant");
                 println!("{name}");
             }

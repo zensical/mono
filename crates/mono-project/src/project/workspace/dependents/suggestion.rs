@@ -86,10 +86,10 @@ where
         for node in self.graph.traverse(sources) {
             let project = self.graph[node];
 
-            // Obtain the current version of the package, and clamp it to the
-            // minimum and maximum required increments for the version. This
-            // ensures that we never suggest an increment lower than what the
-            // version requires or allows.
+            // Obtain the current package version, and clamp the increment to
+            // the minimum and maximum viable increments for the given version.
+            // This ensures that we never suggest an increment lower or higher
+            // than what the version requires or allows.
             let version = project.manifest.version().expect("invariant");
             increments[node] = increments[node]
                 .map(|increment| cmp::min(increment, version.max_bump()))

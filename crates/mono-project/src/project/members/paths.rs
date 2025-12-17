@@ -23,7 +23,7 @@
 
 // ----------------------------------------------------------------------------
 
-//! Iterator over resolved paths of a glob.
+//! Iterator over resolved paths of globs.
 
 use glob::glob;
 use std::path::PathBuf;
@@ -34,7 +34,7 @@ use crate::project::Result;
 // Structs
 // ----------------------------------------------------------------------------
 
-/// Iterator over resolved paths of a glob.
+/// Iterator over resolved paths of globs.
 #[derive(Debug, Default)]
 pub struct Paths {
     /// Stack of patterns.
@@ -82,7 +82,7 @@ impl Iterator for Paths {
 // ----------------------------------------------------------------------------
 
 impl FromIterator<PathBuf> for Paths {
-    /// Creates an iterator from an iterator over patterns.
+    /// Creates an iterator over resolved paths of globs from patterns.
     ///
     /// Note that the given patterns must be valid paths and resolvable from
     /// the current working directory. It's recommended to use absolute paths.

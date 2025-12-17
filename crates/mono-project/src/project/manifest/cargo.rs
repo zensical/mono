@@ -50,8 +50,8 @@ use model::{Dependency, Package, Workspace};
 ///
 /// Note that we only read parts of the manifest relevant to our use case, as
 /// we're solely interested in identifying package name, version, and workspace
-/// members, in order to bump versions. Other fields can be safely ignored, so
-/// we don't model them here.
+/// members, and dependencies, in order to bump versions. Other fields can be
+/// safely ignored, so we don't model them here.
 #[derive(Debug, Deserialize)]
 #[serde(untagged)]
 pub enum Cargo {

@@ -167,6 +167,6 @@ fn parse_issues(body: &str) -> BTreeSet<u32> {
             .and_then(|num| num.parse().ok())
     });
 
-    // Collect issue numbers into set to avoid duplicates
+    // Collect issue references into set to avoid duplicates
     iter.collect()
 }

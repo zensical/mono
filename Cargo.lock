@@ -606,8 +606,10 @@ dependencies = [
  "mono-project",
  "mono-repository",
  "semver",
+ "serde",
  "tempfile",
  "thiserror",
+ "toml",
 ]
 
 [[package]]

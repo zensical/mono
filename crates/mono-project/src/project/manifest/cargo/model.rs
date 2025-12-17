@@ -68,18 +68,3 @@ pub struct Package {
     /// Package version.
     pub version: Version,
 }
-
-// ----------------------------------------------------------------------------
-// Implementations
-// ----------------------------------------------------------------------------
-
-impl Dependency {
-    /// Returns the version requirement.
-    #[must_use]
-    pub fn version(&self) -> Option<&VersionReq> {
-        match self {
-            Dependency::Version(version) => Some(version),
-            Dependency::Info { version } => version.as_ref(),
-        }
-    }
-}

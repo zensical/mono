@@ -1346,16 +1346,16 @@ dependencies = [
 
 [[package]]
 name = "zrx"
-version = "0.0.4"
+version = "0.0.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5c93651ec0f0deb7feadd6fd5d9716d45749678f08ca64856ba9e558f2520d53"
+checksum = "c14c304232173e0dfc6b4f5e836f0a9ae2fdf550413957131b8036e5b9e6269a"
 dependencies = [
  "zrx-diagnostic",
  "zrx-executor",
- "zrx-graph 0.0.2",
+ "zrx-graph",
  "zrx-id",
  "zrx-path",
- "zrx-scheduler 0.0.2",
+ "zrx-scheduler",
  "zrx-store",
  "zrx-stream",
 ]
@@ -1373,16 +1373,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4c0ace038e234e564aa9a352419b7eb8ea64996351affbfb8f2b1a593c3b24d4"
 dependencies = [
  "crossbeam",
- "thiserror",
-]
-
-[[package]]
-name = "zrx-graph"
-version = "0.0.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c8deb42a334884f7d30d4ceba77db865fe22ae0db9a2678e90d1449527c935ad"
-dependencies = [
- "ahash",
  "thiserror",
 ]
 
@@ -1416,23 +1406,6 @@ checksum = "d578267e852d4f325ce124ecbffe0530d9f9013d58a3cfacec75daf04ac40d0b"
 
 [[package]]
 name = "zrx-scheduler"
-version = "0.0.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "977abb2e19cbe3768d29eb7613f2fec66592ae44ccb673585b72b8ad1f17dda1"
-dependencies = [
- "ahash",
- "crossbeam",
- "slab",
- "thiserror",
- "zrx-diagnostic",
- "zrx-executor",
- "zrx-graph 0.0.1",
- "zrx-id",
- "zrx-store",
-]
-
-[[package]]
-name = "zrx-scheduler"
 version = "0.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b1d060c2e453c6207aa65e4cd51379999f0fa09c1d3004adabc383cfa900a144"
@@ -1443,7 +1416,7 @@ dependencies = [
  "thiserror",
  "zrx-diagnostic",
  "zrx-executor",
- "zrx-graph 0.0.2",
+ "zrx-graph",
  "zrx-id",
  "zrx-store",
 ]
@@ -1461,14 +1434,13 @@ dependencies = [
 
 [[package]]
 name = "zrx-stream"
-version = "0.0.1"
+version = "0.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c7c6087ba332dd45fc7a6f364e99f30d28405374ffabe7ac6787fc402ba86473"
+checksum = "4ec48ba80e68dea8c842ff6dca22a588b9010eb2d773585b837498bf880446e6"
 dependencies = [
  "ahash",
  "thiserror",
- "zrx-graph 0.0.1",
  "zrx-id",
- "zrx-scheduler 0.0.1",
+ "zrx-scheduler",
  "zrx-store",
 ]

@@ -28,7 +28,7 @@
 use crate::repository::commit::Commit;
 use crate::repository::Result;
 
-use super::Delta;
+use super::delta::Delta;
 
 // ----------------------------------------------------------------------------
 // Structs

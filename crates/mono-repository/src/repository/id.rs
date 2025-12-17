@@ -80,7 +80,7 @@ impl From<git2::Oid> for Id {
 
 impl fmt::Display for Id {
     /// Formats the object identifier for display.
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         self.0.fmt(f)
     }
 }

@@ -64,7 +64,10 @@ where
         // Resolve versions and create changeset, then determine all commits
         // that are either part of the given version or yet unreleased
         let versions = context.repository.versions()?;
-        let mut changeset = Changeset::new(&context.workspace)?;
+        let mut changeset = Changeset::with_config(
+            &context.workspace,
+            &context.config.changeset,
+        )?;
         for res in versions.commits(self.version.as_ref())? {
             changeset.add(res?)?;
         }

@@ -46,5 +46,7 @@ clap.workspace = true
 cliclack.workspace = true
 console.workspace = true
 semver.workspace = true
+serde.workspace = true
 tempfile.workspace = true
+toml.workspace = true
 thiserror.workspace = true

@@ -23,45 +23,20 @@
 
 // ----------------------------------------------------------------------------
 
-//! Command error.
+//! Configuration.
 
-use std::{io, result};
-use thiserror::Error;
+use serde::Deserialize;
 
 use mono_changeset as changeset;
-use mono_project as project;
-use mono_repository as repository;
 
 // ----------------------------------------------------------------------------
-// Enums
+// Structs
 // ----------------------------------------------------------------------------
 
-/// Command error.
-#[derive(Debug, Error)]
-pub enum Error {
-    /// I/O error.
-    #[error(transparent)]
-    Io(#[from] io::Error),
-    /// TOML error.
-    #[error(transparent)]
-    Toml(#[from] toml::de::Error),
-    /// Version error.
-    #[error(transparent)]
-    Version(#[from] semver::Error),
-    /// Changeset error.
-    #[error(transparent)]
-    Changeset(#[from] changeset::Error),
-    /// Project error.
-    #[error(transparent)]
-    Project(#[from] project::Error),
-    /// Repository error.
-    #[error(transparent)]
-    Repository(#[from] repository::Error),
+/// Configuration.
+#[derive(Debug, Default, Deserialize)]
+pub struct Config {
+    /// Changeset.
+    #[serde(default)]
+    pub changeset: changeset::Config,
 }
-
-// ----------------------------------------------------------------------------
-// Type aliases
-// ----------------------------------------------------------------------------
-
-/// Command result.
-pub type Result<T = ()> = result::Result<T, Error>;

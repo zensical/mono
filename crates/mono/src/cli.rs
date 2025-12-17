@@ -37,9 +37,11 @@ use mono_repository::Repository;
 use crate::Context;
 
 mod command;
+mod config;
 mod error;
 
 pub use command::{Command, Commands};
+pub use config::Config;
 pub use error::Result;
 
 // ----------------------------------------------------------------------------
@@ -78,11 +80,15 @@ pub struct Cli {
 // ----------------------------------------------------------------------------
 
 impl Cli {
-    pub fn execute<T>(self, repository: Repository, workspace: Workspace<T>)
-    where
+    pub fn execute<T>(
+        self, repository: Repository, workspace: Workspace<T>, config: Config,
+    ) where
         T: Manifest,
     {
-        match self.command.execute(Context { repository, workspace }) {
+        match self
+            .command
+            .execute(Context { repository, workspace, config })
+        {
             Ok(()) => process::exit(0),
             Err(err) => {
                 eprintln!("Error: {err}");

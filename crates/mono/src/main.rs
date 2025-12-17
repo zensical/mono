@@ -26,13 +26,14 @@
 //! Command line interface.
 
 use clap::Parser;
+use std::fs;
 
 use mono_project::{Cargo, Manifest, Node, Workspace};
 use mono_repository::Repository;
 
 mod cli;
 
-use cli::{Cli, Result};
+use cli::{Cli, Config, Result};
 
 // ----------------------------------------------------------------------------
 // Structs
@@ -48,6 +49,8 @@ where
     repository: Repository,
     /// Workspace.
     workspace: Workspace<T>,
+    /// Configuration.
+    config: Config,
 }
 
 // ----------------------------------------------------------------------------
@@ -59,10 +62,21 @@ fn main() -> Result {
     let cli = Cli::parse();
     let repository = Repository::open(&cli.directory)?;
     let path = repository.path();
+
+    // Try to load configuraiton, if any
+    let config_path = path.join(".mono.toml");
+    let config = if config_path.exists() {
+        let contents = fs::read_to_string(&config_path)?;
+        toml::from_str(&contents)?
+    } else {
+        Config::default()
+    };
+
+    // Initialize cargo or node workspace
     if let Ok(workspace) = Workspace::<Cargo>::resolve(path) {
-        cli.execute(repository, workspace);
+        cli.execute(repository, workspace, config);
     } else if let Ok(workspace) = Workspace::<Node>::resolve(path) {
-        cli.execute(repository, workspace);
+        cli.execute(repository, workspace, config);
     }
 
     // No errors occurred

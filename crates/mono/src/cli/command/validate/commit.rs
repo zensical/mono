@@ -49,7 +49,7 @@ use crate::Context;
 #[command(group(
     ArgGroup::new("input")
         .required(true)
-        .args(&["message", "file", "id"])
+        .args(&["summary", "file", "id"])
 ))]
 pub struct Arguments {
     /// Commit message summary.

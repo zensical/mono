@@ -72,7 +72,7 @@ where
         // Obtain version increments, which denote which packages have changed,
         // and abort immediately if there are no changes that require a release
         let mut increments = changeset.increments().to_vec();
-        if increments.iter().all(Option::is_none) {
+        if !versions.is_empty() && increments.iter().all(Option::is_none) {
             eprintln!("Nothing to release");
             return Ok(());
         }

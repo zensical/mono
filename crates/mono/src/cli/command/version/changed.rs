@@ -91,7 +91,9 @@ where
         // packages to standard output if they have a version increment
         let dependents = context.workspace.dependents()?;
         for node in &dependents {
-            if increments[node].is_some() {
+            // In case no versions have been created so far, all packages must
+            // be considered changed to be included in the initial release
+            if increments[node].is_some() || versions.is_empty() {
                 let name = dependents[node].name().expect("invariant");
                 println!("{name}");
             }

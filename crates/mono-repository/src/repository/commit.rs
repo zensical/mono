@@ -32,10 +32,12 @@ use super::id::Id;
 use super::Repository;
 
 mod delta;
-mod iter;
+mod deltas;
+mod trailers;
 
-pub use delta::{Delta, Deltas};
-pub use iter::Commits;
+pub use delta::Delta;
+pub use deltas::Deltas;
+pub use trailers::Trailers;
 
 // ----------------------------------------------------------------------------
 // Structs
@@ -166,10 +168,7 @@ impl fmt::Debug for Commit<'_> {
 ///
 /// [`Error::Git`]: crate::repository::Error::Git
 pub fn trim_trailers(message: &str) -> Result<&str> {
-    // We must add two line feeds to the message, or the trailers would not be
-    // discoverable, since git assumes that we pass the entire commit message
-    let prepared = format!("\n\n{message}");
-    let trailers = git2::message_trailers_strs(prepared.as_str())?;
+    let trailers: Trailers = message.parse()?;
     if let Some((key, _)) = trailers.iter().next() {
         Ok(message.split_once(key).map_or(message, |(body, _)| body))
     } else {

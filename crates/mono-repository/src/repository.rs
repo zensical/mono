@@ -30,6 +30,7 @@ use std::path::Path;
 use std::process::Command;
 
 pub mod commit;
+pub mod commits;
 mod error;
 pub mod id;
 pub mod versions;

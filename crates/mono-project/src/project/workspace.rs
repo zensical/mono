@@ -25,7 +25,7 @@
 
 //! Workspace.
 
-use std::collections::btree_map::{Values, ValuesMut};
+use std::collections::btree_map::Values;
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 

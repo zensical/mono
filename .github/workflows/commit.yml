@@ -46,9 +46,9 @@ jobs:
 
       - name: Get commit messages
         run: |
-          base="${{ github.event.pull_request.base.sha }}"
-          head="${{ github.event.pull_request.head.sha }}"
-          git log "${base}..${head}" --format=%h > commits.txt
+          BASE="${{ github.event.pull_request.base.sha }}"
+          HEAD="${{ github.event.pull_request.head.sha }}"
+          git log "$BASE..$HEAD" --format=%h > commits.txt
 
       - name: Validate commit messages
         run: |

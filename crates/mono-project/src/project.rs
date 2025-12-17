@@ -125,7 +125,7 @@ where
     T: Manifest,
 {
     type Item = Result<Project<T>>;
-    type IntoIter = Chain<Once<Result<Project<T>>>, Members<T>>;
+    type IntoIter = Chain<Once<Self::Item>, Members<T>>;
 
     /// Creates an iterator over the project and its members.
     #[inline]

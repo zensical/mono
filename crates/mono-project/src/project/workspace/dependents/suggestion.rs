@@ -25,10 +25,11 @@
 
 //! Version increment suggestion.
 
+use std::cmp;
 use std::collections::BTreeSet;
 
 use crate::project::manifest::Manifest;
-use crate::project::version::Increment;
+use crate::project::version::{Increment, VersionExt};
 use crate::project::{Project, Result};
 
 use super::Dependents;
@@ -66,6 +67,7 @@ where
     /// # Errors
     ///
     /// This method passes through errors returned by the given function.
+    #[allow(clippy::missing_panics_doc)]
     pub fn bump<F>(&self, increments: &mut [Option<Increment>], f: F) -> Result
     where
         F: Fn(Suggestion<'_, T>) -> Result<Option<Increment>>,
@@ -82,6 +84,17 @@ where
         // chosen by the caller are correctly propagated to dependents
         let incoming = self.graph.topology().incoming();
         for node in self.graph.traverse(sources) {
+            let project = self.graph[node];
+
+            // Obtain the current version of the package, and clamp it to the
+            // minimum and maximum required increments for the version. This
+            // ensures that we never suggest an increment lower than what the
+            // version requires or allows.
+            let version = project.manifest.version().expect("invariant");
+            increments[node] = increments[node]
+                .map(|increment| cmp::min(increment, version.max_bump()))
+                .or(version.min_bump());
+
             // Obtain the unique version increments of all dependencies, and
             // collect them into a set for selection through the caller
             let mut options = BTreeSet::from_iter([increments[node]]);
@@ -94,7 +107,7 @@ where
             // Collect the suggested version increments, and invoke the given
             // function, remembering the returned version increment
             increments[node] = f(Suggestion {
-                project: self.graph[node],
+                project,
                 increments: &options.into_iter().collect::<Vec<_>>(),
             })?;
         }

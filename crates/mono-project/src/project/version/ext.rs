@@ -38,7 +38,10 @@ pub trait VersionExt {
     /// Returns the next version after applying the given increment.
     fn bump(&self, increment: Increment) -> Version;
 
-    /// Returns the highest possible increment for the version.
+    /// Returns the minimum increment for the version.
+    fn min_bump(&self) -> Option<Increment>;
+
+    /// Returns the maximum increment for the version.
     fn max_bump(&self) -> Increment;
 
     /// Parses a version from a string, allowing for an optional `v` prefix.
@@ -113,15 +116,21 @@ impl VersionExt for Version {
         version
     }
 
-    /// Returns the highest possible increment for the version.
-    ///
-    /// This method returns the highest possible increment for this version,
-    /// taking into account special handling for `0.0.z` and `0.y.z` ranges.
+    /// Returns the minimum increment for the version.
+    fn min_bump(&self) -> Option<Increment> {
+        if let (0, 0) = (self.major, self.minor) {
+            Some(Increment::Patch)
+        } else {
+            None
+        }
+    }
+
+    /// Returns the maximum increment for the version.
     fn max_bump(&self) -> Increment {
         match (self.major, self.minor) {
             (0, 0) => Increment::Patch,
             (0, _) => Increment::Minor,
-            _ => Increment::Major,
+            (_, _) => Increment::Major,
         }
     }
 }

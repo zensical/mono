@@ -27,6 +27,7 @@
 
 use clap::Args;
 use semver::Version;
+use std::borrow::Cow;
 
 use mono_changeset::Changeset;
 use mono_project::version::VersionExt;
@@ -72,22 +73,19 @@ where
         // careful about line feeds, we collect everything before writing
         let mut queue = Vec::new();
         if self.summary {
-            queue.push(changeset.summary()?);
+            queue.push(Cow::Borrowed(changeset.summary()?));
         }
 
-        // Only write to standard out if the changelog is not empty, which can
-        // happen despite changes being present - this happens when changes do
-        // not touch published artifacts, as they solely improve on formatting,
-        // documentation, or the build setup.
+        // Generate changelog, and append to queue if it's not empty - we also
+        // need to support summary-only releases, i.e., pure version bumps
         let changelog = changeset.to_changelog();
         if !changelog.is_empty() {
-            let value = changelog.to_string();
-            queue.push(&value);
+            queue.push(Cow::Owned(changelog.to_string()));
+        }
 
-            // Got something to say
-            if !queue.is_empty() {
-                println!("{}", queue.join("\n\n"));
-            }
+        // Write everything to standard out
+        if !queue.is_empty() {
+            println!("{}", queue.join("\n\n"));
         }
 
         // No errors occurred

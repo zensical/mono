@@ -37,11 +37,10 @@ pub mod revision;
 pub mod scopes;
 
 use change::Change;
+use config::Config;
 pub use error::{Error, Result};
 use revision::Revision;
 use scopes::Scopes;
-
-use crate::changeset::config::Config;
 
 // ----------------------------------------------------------------------------
 // Structs

@@ -96,7 +96,6 @@ impl<'a> Changeset<'a> {
     /// it into the changeset, e.g., merge commits.
     ///
     /// [`Error::Repository`]: crate::changeset::Error::Repository
-    #[allow(clippy::missing_panics_doc)]
     pub fn add(&mut self, commit: Commit<'a>) -> Result {
         if let Ok(change) = Change::from_str(commit.summary()) {
             // Retrieve affected scopes from commit

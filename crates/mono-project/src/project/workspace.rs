@@ -137,12 +137,6 @@ where
     pub fn iter(&self) -> Values<'_, PathBuf, Project<T>> {
         self.into_iter()
     }
-
-    /// Creates a mutable iterator over the workspace.
-    #[inline]
-    pub fn iter_mut(&mut self) -> ValuesMut<'_, PathBuf, Project<T>> {
-        self.into_iter()
-    }
 }
 
 // ----------------------------------------------------------------------------
@@ -160,19 +154,5 @@ where
     #[inline]
     fn into_iter(self) -> Self::IntoIter {
         self.projects.values()
-    }
-}
-
-impl<'a, T> IntoIterator for &'a mut Workspace<T>
-where
-    T: Manifest,
-{
-    type Item = &'a mut Project<T>;
-    type IntoIter = ValuesMut<'a, PathBuf, Project<T>>;
-
-    /// Creates a mutable iterator over the workspace.
-    #[inline]
-    fn into_iter(self) -> Self::IntoIter {
-        self.projects.values_mut()
     }
 }

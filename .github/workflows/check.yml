@@ -84,3 +84,21 @@ jobs:
       - name: Audit dependencies
         run: cargo audit
 
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    if: |
+      startsWith(github.event.pull_request.head.ref, 'release/')
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.sha }}
+
+      - name: Check commit count
+        run: |
+          COUNT=$(git rev-list --count HEAD ^origin/master)
+          if [ "$COUNT" -ne 1 ]; then
+            echo "Release branch must contain exactly one commit, found $COUNT"
+            exit 1
+          fi

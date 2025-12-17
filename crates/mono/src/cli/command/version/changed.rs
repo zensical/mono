@@ -73,8 +73,12 @@ where
         let mut increments = changeset.increments().to_vec();
         if self.version.is_some() {
             let scopes = changeset.scopes();
-            if let Some(first) = changeset.revisions().first() {
-                for delta in first.commit().deltas()? {
+            if let Some(head) = changeset.revisions().first() {
+                let commit = head.commit();
+
+                // Traverse all deltas in the commit, and mark corresponding
+                // scopes as changed with at least a patch increment
+                for delta in commit.deltas()? {
                     if let Some(node) = scopes.get(delta.path()) {
                         increments[node] =
                             cmp::max(increments[node], Some(Increment::Patch));

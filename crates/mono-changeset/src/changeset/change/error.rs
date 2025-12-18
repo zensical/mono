@@ -41,6 +41,9 @@ pub enum Error {
     /// Invalid kind.
     #[error("invalid kind")]
     Kind,
+    /// Invalid reference.
+    #[error("invalid reference")]
+    Reference,
     /// Summary has leading or trailing whitespace.
     #[error("summary has leading or trailing whitespace")]
     Whitespace,
@@ -50,9 +53,6 @@ pub enum Error {
     /// Summary must not end with punctuation.
     #[error("summary must not end with punctuation")]
     Punctuation,
-    /// Summary must not contain issue references.
-    #[error("summary must not contain issue references")]
-    Reference,
 }
 
 // ----------------------------------------------------------------------------

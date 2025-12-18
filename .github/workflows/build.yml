@@ -114,7 +114,7 @@ jobs:
             -DestinationPath artifacts/mono-${{ matrix.target }}.zip
 
       - name: Create artifact attestation
-        if: ${{ inputs.attestations == true }}
+        if: inputs.attestations == true
         uses: actions/attest-build-provenance@v1
         with:
           show-summary: false

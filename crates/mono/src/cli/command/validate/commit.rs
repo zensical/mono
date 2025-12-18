@@ -28,7 +28,6 @@
 use clap::{ArgGroup, Args};
 use cliclack::{confirm, input, outro};
 use console::style;
-use std::io::Write;
 use std::path::PathBuf;
 use std::str::FromStr;
 use std::{fs, process};
@@ -92,15 +91,16 @@ where
         } else {
             let path = self.file.as_ref().expect("invariant");
             let message = fs::read_to_string(path)?;
-            if let Some(summary) = message.lines().next() {
-                if parse_summary(summary).is_none() {
-                    process::exit(1);
-                }
-            }
+
+            // Retrieve first line, and parse as summary
+            let summary = message.lines().next().unwrap_or_default();
+            let Some(change) = parse_summary(summary) else {
+                process::exit(1)
+            };
 
             // Prompt the user for missing information
-            let mut issues = parse_issues(message.as_str());
-            if self.prompt && issues.next().is_none() {
+            let references = change.references();
+            if self.prompt && references.is_empty() {
                 if confirm("Is this commit related to an issue?")
                     .initial_value(true)
                     .interact()?
@@ -110,35 +110,26 @@ where
                         .placeholder("  e.g. 123")
                         .interact()?;
 
-                    // Prompt whether the issue is resolved with the commit
-                    let is_resolved =
-                        confirm("Does the commit resolve the issue?")
-                            .initial_value(false)
-                            .interact()?;
+                    // Append the reference to the first line
+                    let mut lines: Vec<&str> = message.lines().collect();
+                    let first = lines.get_mut(0).expect("invariant");
+                    let slice = format!("{first} (#{num})");
+                    *first = &slice;
 
-                    // Create the appropriate message based on the response
-                    let action = if is_resolved {
-                        format!("Resolves #{num}")
-                    } else {
-                        format!("Concerns #{num}")
-                    };
-
-                    // Append message to commit message file
-                    writeln!(
-                        fs::OpenOptions::new().append(true).open(path)?,
-                        "\n{action}"
-                    )?;
+                    // Join lines and write back to file
+                    let new_message = lines.join("\n");
+                    fs::write(path, new_message)?;
 
                     // Denote completion of prompt to the user
                     outro(format!(
                         "{} {}",
-                        style(action),
-                        style("added to commit body").dim()
+                        style(format!("(#{num})")),
+                        style("added to commit summary").dim()
                     ))?;
 
                 // Issue is not related to a commit
                 } else {
-                    outro(style("Nothing added to commit body").dim())?;
+                    outro(style("Nothing added to commit summary").dim())?;
                 }
             }
         }
@@ -188,13 +179,4 @@ fn parse_summary(summary: &str) -> Option<Change> {
 
     // Return nothing
     None
-}
-
-/// Parses issue references from the given commit body, e.g., `#123`.
-fn parse_issues(body: &str) -> impl Iterator<Item = u32> {
-    body.split_whitespace().filter_map(|word| {
-        word.trim_matches(|char: char| !char.is_ascii_digit() && char != '#')
-            .strip_prefix('#')
-            .and_then(|num| num.parse().ok())
-    })
 }

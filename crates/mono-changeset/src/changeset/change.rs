@@ -293,7 +293,9 @@ fn extract(value: &str, references: &mut BTreeSet<u32>) -> Result<String> {
 
     // Extract remaining part of the summary, and join parts with whitespace
     // to return them as a cleaned up version of the original summary
-    summary.push(value[start..].trim());
+    if start < value.len() {
+        summary.push(value[start..].trim());
+    }
     Ok(summary.join(" "))
 }
 

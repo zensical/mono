@@ -44,6 +44,7 @@ jobs:
     uses: ./.github/workflows/build.yml
     with:
       ref: ${{ github.event.pull_request.merge_commit_sha }}
+      attestations: true
 
   tag:
     name: Create tag

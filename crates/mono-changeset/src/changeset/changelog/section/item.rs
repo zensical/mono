@@ -43,8 +43,6 @@ pub struct Item<'a> {
     revision: &'a Revision<'a>,
     /// Affected scopes.
     scopes: Vec<&'a str>,
-    /// Relevant issues.
-    issues: Vec<u32>,
 }
 
 // ----------------------------------------------------------------------------
@@ -62,11 +60,7 @@ impl<'a> Section<'a> {
         }
 
         // Create item and add to section
-        self.items.push(Item {
-            revision,
-            scopes: affected,
-            issues: revision.issues().to_vec(),
-        });
+        self.items.push(Item { revision, scopes: affected });
     }
 }
 
@@ -95,20 +89,21 @@ impl fmt::Display for Item<'_> {
             }
         }
 
-        // Retrieve change and write summary
+        // Write summary
         let change = self.revision.change();
         f.write_str(" – ")?;
         f.write_str(change.summary())?;
 
-        // Write relevant issues
-        if !self.issues.is_empty() {
+        // Write references
+        let references = change.references();
+        if !references.is_empty() {
             f.write_str(" (")?;
-            for (i, issue) in self.issues.iter().enumerate() {
+            for (i, reference) in references.iter().enumerate() {
                 f.write_char('#')?;
-                issue.fmt(f)?;
+                reference.fmt(f)?;
 
                 // Write comma if not last
-                if i < self.issues.len() - 1 {
+                if i < references.len() - 1 {
                     f.write_str(", ")?;
                 }
             }

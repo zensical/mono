@@ -25,6 +25,7 @@
 
 //! Change.
 
+use std::collections::BTreeSet;
 use std::fmt::{self, Write};
 use std::str::FromStr;
 
@@ -47,6 +48,8 @@ pub struct Change {
     kind: Kind,
     /// Change summary.
     summary: String,
+    /// Change references.
+    references: Vec<u32>,
     /// Change is breaking.
     is_breaking: bool,
 }
@@ -103,6 +106,12 @@ impl Change {
     #[inline]
     pub fn summary(&self) -> &str {
         &self.summary
+    }
+
+    /// Returns the change references.
+    #[inline]
+    pub fn references(&self) -> &[u32] {
+        &self.references
     }
 
     /// Returns whether the change is breaking.
@@ -179,19 +188,15 @@ impl FromStr for Change {
             return Err(Error::Punctuation);
         }
 
-        // Ensure summary doesn't contain an issue or pull request reference as
-        // those should be moved into the commit body
-        if let Some(rest) = summary.split(" #").nth(1) {
-            if let Some(word) = rest.split_whitespace().next() {
-                if word.chars().all(|char| char.is_ascii_digit()) {
-                    return Err(Error::Reference);
-                }
-            }
-        }
-
-        // Return change
-        let summary = summary.to_string();
-        Ok(Change { kind, summary, is_breaking })
+        // Extract references from the summary, and ensure they are sorted,
+        // which is why we use a sorted set instead of a vector here
+        let mut references = BTreeSet::new();
+        Ok(Change {
+            kind,
+            summary: extract(summary, &mut references)?,
+            references: Vec::from_iter(references),
+            is_breaking,
+        })
     }
 }
 
@@ -207,8 +212,91 @@ impl fmt::Display for Change {
 
         // Write summary
         f.write_str(": ")?;
-        self.summary.fmt(f)
+        self.summary.fmt(f)?;
+
+        // Write references
+        if !self.references.is_empty() {
+            f.write_str(" (")?;
+            for (i, reference) in self.references.iter().enumerate() {
+                f.write_char('#')?;
+                reference.fmt(f)?;
+
+                // Write comma if not last
+                if i < self.references.len() - 1 {
+                    f.write_str(", ")?;
+                }
+            }
+            f.write_char(')')?;
+        }
+
+        // No errors occurred
+        Ok(())
     }
+}
+
+// ----------------------------------------------------------------------------
+// Functions
+// ----------------------------------------------------------------------------
+
+/// Extracts references in the format `(#123)` from the given string, or fails
+/// if a reference was found but it's not wrapped in parenthesis.
+fn extract(value: &str, references: &mut BTreeSet<u32>) -> Result<String> {
+    let mut summary = Vec::new();
+
+    // Iterate over the given string, searching for references
+    let mut start = 0;
+    for end in 0..value.len() {
+        if end < start {
+            continue;
+        }
+
+        // Check, if the current character is a '#', which might indicate a
+        // reference if and only if followed by numeric characters
+        if &value[end..=end] != "#" {
+            continue;
+        }
+
+        // Now, try to read as many numeric characters as possible after the
+        // '#', and consider it a reference if we found any
+        let rest = &value[end + 1..];
+        let Some(after) = rest.find(|char: char| !char.is_numeric()) else {
+            continue;
+        };
+
+        // In case we found a reference, parse it, and add it to the list if
+        // it is wrapped in parenthesis. Otherwise, fail with an error.
+        if after > 0 {
+            let Ok(reference) = rest[0..after].parse::<u32>() else {
+                continue;
+            };
+
+            // Check format if we're not at the beginning of the string
+            if end > 0 {
+                let opening = value.chars().nth(end - 1);
+                let closing = value.chars().nth(end + after + 1);
+
+                // Next, check if the characters before the '#' and after the
+                // reference are both parenthesis, as this is required
+                if opening == Some('(') && closing == Some(')') {
+                    references.insert(reference);
+                } else {
+                    return Err(Error::Reference);
+                }
+
+                // Extract summary part before the reference, and move the
+                // start position exactly after the reference
+                summary.push(value[start..end - 1].trim());
+                start = end + after + 2;
+            }
+        }
+    }
+
+    // Extract remaining part of the summary, and join parts with whitespace
+    // to return them as a cleaned up version of the original summary
+    if start < value.len() {
+        summary.push(value[start..].trim());
+    }
+    Ok(summary.join(" "))
 }
 
 // ----------------------------------------------------------------------------

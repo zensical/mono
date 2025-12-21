@@ -39,7 +39,7 @@ all = { level = "warn", priority = -1 }
 pedantic = { level = "warn", priority = -1 }
 
 [workspace.dependencies]
-mono-changeset = { version = "0.0.4", path = "crates/mono-changeset" }
+mono-changeset = { version = "0.0.5", path = "crates/mono-changeset" }
 mono-project = { version = "0.0.2", path = "crates/mono-project" }
 mono-repository = { version = "0.0.3", path = "crates/mono-repository" }
 

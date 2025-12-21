@@ -85,7 +85,7 @@ impl Scopes {
     ///
     /// // Create scope set builder and add path
     /// let mut builder = Scopes::builder();
-    /// builder.add("crates/mono", "mono")?;
+    /// builder.add("crates/mono/**", "mono")?;
     ///
     /// // Create scope set from builder
     /// let scopes = builder.build()?;

@@ -94,7 +94,7 @@ impl Changeset<'_> {
     {
         let mut builder = Scopes::builder();
         for (path, name) in workspace.packages() {
-            builder.add(path, name)?;
+            builder.add(path.join("**"), name)?;
         }
 
         // Append additional scopes from configuration

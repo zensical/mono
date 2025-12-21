@@ -85,7 +85,7 @@ impl Builder {
     ///
     /// // Create scope set builder and add scope
     /// let mut builder = Scopes::builder();
-    /// builder.add("crates/mono", "mono")?;
+    /// builder.add("crates/mono/**", "mono")?;
     /// # Ok(())
     /// # }
     /// ```
@@ -103,13 +103,10 @@ impl Builder {
         if self.paths.iter().any(|(candidate, _)| candidate == path) {
             Err(Error::PathExists)
 
-        // Create pattern matching all files under the given path
+        // Create glob and add to builder
         } else {
-            let glob = path.join("**");
-
-            // Create glob and add to builder
             self.paths.push((path.to_path_buf(), name.into()));
-            self.globs.add(Glob::new(&glob.to_string_lossy())?);
+            self.globs.add(Glob::new(&path.to_string_lossy())?);
 
             // Return builder for chaining
             Ok(self)
@@ -133,7 +130,7 @@ impl Builder {
     ///
     /// // Create scope set builder and add scope
     /// let mut builder = Scopes::builder();
-    /// builder.add("crates/mono", "mono")?;
+    /// builder.add("crates/mono/**", "mono")?;
     ///
     /// // Create scope set from builder
     /// let scopes = builder.build()?;

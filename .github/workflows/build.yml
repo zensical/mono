@@ -115,7 +115,7 @@ jobs:
 
       - name: Create artifact attestation
         if: inputs.attestations == true
-        uses: actions/attest-build-provenance@v1
+        uses: actions/attest@v4
         with:
           show-summary: false
           subject-path: artifacts/*

@@ -213,8 +213,7 @@ impl Repository {
         let opt = self.inner.head()?;
         Ok(opt
             .shorthand()
-            .filter(|name| ["master", "main"].contains(name))
-            .is_some())
+            .is_some_and(|name| ["master", "main"].contains(&name)))
     }
 }
 

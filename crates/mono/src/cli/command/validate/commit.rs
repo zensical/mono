@@ -153,7 +153,7 @@ fn parse_summary(summary: &str) -> Option<Change> {
     // Check, if we got a merge commit or revert, which we need to ignore, as
     // they don't follow the conventional commit format, and are irrelevant
     if summary.starts_with("Merge") || summary.starts_with("Revert") {
-        return None;
+        process::exit(0);
     }
 
     // Write to standard error and add a useful hint, describing the error type

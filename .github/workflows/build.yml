@@ -79,7 +79,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           ref: ${{ inputs.ref || github.sha }}
 
@@ -121,7 +121,7 @@ jobs:
           subject-path: artifacts/*
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: mono-${{ matrix.target }}${{ matrix.suffix }}
           path: artifacts/*

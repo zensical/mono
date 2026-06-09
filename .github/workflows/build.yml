@@ -41,7 +41,7 @@ on:
 
 permissions:
   attestations: write # Required for attestations
-  id-token: write     # Required for OIDC
+  id-token: write # Required for OIDC
 
 jobs:
   build:
@@ -57,7 +57,7 @@ jobs:
             os: ubuntu-latest
             target: i686-unknown-linux-gnu
           - name: Linux, aarch64
-            os: ubuntu-latest
+            os: ubuntu-24.04-arm
             target: aarch64-unknown-linux-gnu
           - name: Linux, armv7
             os: ubuntu-latest
@@ -65,13 +65,11 @@ jobs:
           - name: Windows, x64
             os: windows-latest
             target: x86_64-pc-windows-msvc
-            suffix: .exe
           - name: Windows, x86
             os: windows-latest
             target: i686-pc-windows-msvc
-            suffix: .exe
           - name: macOS, x86_64
-            os: macos-latest
+            os: macos-13
             target: x86_64-apple-darwin
           - name: macOS, aarch64
             os: macos-latest
@@ -102,7 +100,7 @@ jobs:
         run: |
           mkdir -p artifacts
           tar -czf artifacts/mono-${{ matrix.target }}.tar.gz -C \
-            target/release mono${{ matrix.suffix }}
+            target/release mono
 
       - name: Create artifact archive (Windows)
         shell: pwsh
@@ -110,7 +108,7 @@ jobs:
         run: |
           mkdir -p artifacts
           Compress-Archive `
-            -Path target/release/mono${{ matrix.suffix }} `
+            -Path target/release/mono.exe `
             -DestinationPath artifacts/mono-${{ matrix.target }}.zip
 
       - name: Create artifact attestation
@@ -123,5 +121,5 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v7
         with:
-          name: mono-${{ matrix.target }}${{ matrix.suffix }}
+          name: mono-${{ matrix.target }}
           path: artifacts/*

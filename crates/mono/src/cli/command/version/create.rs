@@ -64,7 +64,10 @@ where
         // Resolve versions and create changeset, then determine all commits
         // that were added after the latest version was released
         let versions = context.repository.versions()?;
-        let mut changeset = Changeset::new(&context.workspace)?;
+        let mut changeset = Changeset::with_config(
+            &context.workspace,
+            &context.config.changeset,
+        )?;
         for res in versions.commits(None)? {
             changeset.add(res?)?;
         }

@@ -333,13 +333,23 @@ mod tests {
         #[test]
         fn errors_on_invalid_format() {
             for format in [
-                "fix:summary",
-                "fix:  summary",
+                "fix:summary", // fmt
                 "fix :summary",
                 "fix summary",
             ] {
                 let res = Change::from_str(format);
                 assert!(matches!(res, Err(Error::Format)));
+            }
+        }
+
+        #[test]
+        fn errors_on_invalid_whitespace() {
+            for format in [
+                "fix:  summary", // fmt
+                "fix: summary ",
+            ] {
+                let res = Change::from_str(format);
+                assert!(matches!(res, Err(Error::Whitespace)));
             }
         }
 

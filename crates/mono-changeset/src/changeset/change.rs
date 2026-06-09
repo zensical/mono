@@ -66,7 +66,8 @@ impl Change {
     /// ```
     /// # use std::error::Error;
     /// # fn main() -> Result<(), Box<dyn Error>> {
-    /// use mono_changeset::{Change, Increment};
+    /// use mono_changeset::Change;
+    /// use mono_project::version::Increment;
     ///
     /// // Create increment from change
     /// let change: Change = "fix: summary".parse()?;
@@ -238,65 +239,61 @@ impl fmt::Display for Change {
 // Functions
 // ----------------------------------------------------------------------------
 
-/// Extracts references in the format `(#123)` from the given string, or fails
-/// if a reference was found but it's not wrapped in parenthesis.
+/// Extracts trailing references in the format `(#123)` from the given string,
+/// or fails if a reference was found but is not wrapped in parenthesis.
 fn extract(value: &str, references: &mut BTreeSet<u32>) -> Result<String> {
-    let mut summary = Vec::new();
+    let mut end = value.trim_end().len();
 
-    // Iterate over the given string, searching for references
-    let mut start = 0;
-    for end in 0..value.len() {
-        if end < start {
-            continue;
-        }
-
-        // Check, if the current character is a '#', which might indicate a
-        // reference if and only if followed by numeric characters
-        if &value[end..=end] != "#" {
-            continue;
-        }
-
-        // Now, try to read as many numeric characters as possible after the
-        // '#', and consider it a reference if we found any
-        let rest = &value[end + 1..];
-        let Some(after) = rest.find(|char: char| !char.is_numeric()) else {
-            continue;
+    // Iterate over the given string from the end, searching for trailing
+    // references and stopping as soon as there are no more to be extracted
+    loop {
+        // Check, if the current suffix ends with a closing parenthesis, which
+        // might indicate a trailing reference, or abort if it doesn't
+        let summary = value[..end].trim_end();
+        let Some(')') = summary.chars().last() else {
+            break;
         };
 
-        // In case we found a reference, parse it, and add it to the list if
-        // it is wrapped in parenthesis. Otherwise, fail with an error.
-        if after > 0 {
-            let Ok(reference) = rest[0..after].parse::<u32>() else {
-                continue;
-            };
+        // Now, try to find the matching `(#` marker before the found closing
+        // parenthesis, and consider it a reference if it only contains digits.
+        let closing = summary.len() - 1;
+        let Some(opening) = summary[..closing].rfind("(#") else {
+            break;
+        };
 
-            // Check format if we're not at the beginning of the string
-            if end > 0 {
-                let opening = value.chars().nth(end - 1);
-                let closing = value.chars().nth(end + after + 1);
-
-                // Next, check if the characters before the '#' and after the
-                // reference are both parenthesis, as this is required
-                if opening == Some('(') && closing == Some(')') {
-                    references.insert(reference);
-                } else {
-                    return Err(Error::Reference);
-                }
-
-                // Extract summary part before the reference, and move the
-                // start position exactly after the reference
-                summary.push(value[start..end - 1].trim());
-                start = end + after + 2;
-            }
+        // Extract the characters between the `(#` marker and the `)` closing
+        // parenthesis, and ensure they are all digits or abort if not
+        let digits = &summary[opening + 2..closing];
+        if digits.is_empty()
+            || !digits.chars().all(|char| char.is_ascii_digit())
+        {
+            break;
         }
+
+        // In case we found a reference, ensure it is separated from the
+        // summary by whitespace or at the beginning of the string
+        if opening > 0
+            && summary[..opening]
+                .chars()
+                .last()
+                .is_some_and(|char| !char.is_whitespace())
+        {
+            break;
+        }
+
+        // Parse the digits as a reference, or return an error if parsing fails,
+        // which can theoretically only happen if the number exceeds `u32::MAX`
+        let Ok(reference) = digits.parse::<u32>() else {
+            return Err(Error::Reference);
+        };
+
+        // Add the reference to the set, and continue from there
+        references.insert(reference);
+        end = summary[..opening].trim_end().len();
     }
 
-    // Extract remaining part of the summary, and join parts with whitespace
-    // to return them as a cleaned up version of the original summary
-    if start < value.len() {
-        summary.push(value[start..].trim());
-    }
-    Ok(summary.join(" "))
+    // Return the trimmed summary
+    Ok(value[..end].to_string())
 }
 
 // ----------------------------------------------------------------------------
@@ -333,13 +330,23 @@ mod tests {
         #[test]
         fn errors_on_invalid_format() {
             for format in [
-                "fix:summary",
-                "fix:  summary",
+                "fix:summary", // fmt
                 "fix :summary",
                 "fix summary",
             ] {
                 let res = Change::from_str(format);
                 assert!(matches!(res, Err(Error::Format)));
+            }
+        }
+
+        #[test]
+        fn errors_on_invalid_whitespace() {
+            for format in [
+                "fix:  summary", // fmt
+                "fix: summary ",
+            ] {
+                let res = Change::from_str(format);
+                assert!(matches!(res, Err(Error::Whitespace)));
             }
         }
 
@@ -353,6 +360,21 @@ mod tests {
                 let res = Change::from_str(format);
                 assert!(matches!(res, Err(Error::Kind)));
             }
+        }
+
+        #[test]
+        fn ignores_non_trailing_reference() {
+            let change =
+                Change::from_str("fix: revert \"fix (#1)\" (#2)").unwrap();
+            assert_eq!(change.summary, "revert \"fix (#1)\"");
+            assert_eq!(change.references, vec![2]);
+        }
+
+        #[test]
+        fn ignores_reference_with_trailing_text() {
+            let change = Change::from_str("fix: summary (#1), extra").unwrap();
+            assert_eq!(change.summary, "summary (#1), extra");
+            assert!(change.references.is_empty());
         }
     }
 }

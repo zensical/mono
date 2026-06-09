@@ -281,16 +281,18 @@ fn extract(value: &str, references: &mut BTreeSet<u32>) -> Result<String> {
             break;
         }
 
-        // Parse the digits as a reference, and abort if parsing fails, which
-        // can theoretically only happen if the number exceeds `u32::MAX`
+        // Parse the digits as a reference, or return an error if parsing fails,
+        // which can theoretically only happen if the number exceeds `u32::MAX`
         let Ok(reference) = digits.parse::<u32>() else {
-            break;
+            return Err(Error::Reference);
         };
 
         // Add the reference to the set, and continue from there
         references.insert(reference);
         end = summary[..opening].trim_end().len();
     }
+
+    // Return the trimmed summary
     Ok(value[..end].to_string())
 }
 

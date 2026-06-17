@@ -95,6 +95,21 @@ impl Manifest for Cargo {
         }
     }
 
+    /// Returns a reference to the repository.
+    #[inline]
+    fn repository(&self) -> Option<Cow<'_, str>> {
+        let repository = match self {
+            Cargo::Package { package, .. } => package.repository.as_ref()?,
+            Cargo::Workspace { workspace } => {
+                let package = workspace.package.as_ref()?;
+                package.repository.as_ref()?
+            }
+        };
+
+        // Return repository URL
+        repository.url().map(Cow::Borrowed)
+    }
+
     /// Returns a reference to the members.
     #[inline]
     fn members(&self) -> Cow<'_, [String]> {

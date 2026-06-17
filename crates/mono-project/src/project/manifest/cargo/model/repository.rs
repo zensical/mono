@@ -23,13 +23,39 @@
 
 // ----------------------------------------------------------------------------
 
-//! Cargo manifest model.
+//! Cargo repository.
 
-mod dependency;
-mod package;
-mod repository;
-mod workspace;
+use serde::Deserialize;
 
-pub use dependency::Dependency;
-pub use package::Package;
-pub use workspace::Workspace;
+// ----------------------------------------------------------------------------
+// Enums
+// ----------------------------------------------------------------------------
+
+/// Cargo repository.
+#[derive(Debug, Deserialize)]
+#[serde(untagged)]
+pub enum Repository {
+    /// Repository URL.
+    Url(String),
+    /// Repository inherited from workspace.
+    Workspace {
+        /// Workspace flag.
+        workspace: bool,
+    },
+}
+
+// ----------------------------------------------------------------------------
+// Implementations
+// ----------------------------------------------------------------------------
+
+impl Repository {
+    /// Returns the repository URL.
+    #[inline]
+    pub fn url(&self) -> Option<&str> {
+        if let Repository::Url(url) = self {
+            Some(url)
+        } else {
+            None
+        }
+    }
+}

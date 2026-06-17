@@ -23,79 +23,52 @@
 
 // ----------------------------------------------------------------------------
 
-//! Section.
+//! Changelog options.
 
-use std::fmt::{self, Display, Write};
+use std::str::FromStr;
 
-use super::Options;
+mod error;
 
-mod category;
-mod item;
-
-pub use category::Category;
-pub use item::Item;
+pub use error::{Error, Result};
 
 // ----------------------------------------------------------------------------
 // Structs
 // ----------------------------------------------------------------------------
 
-/// Section.
-#[derive(Debug)]
-pub struct Section<'a> {
-    /// Section category.
-    category: Category,
-    /// Section items.
-    items: Vec<Item<'a>>,
-}
-
-// ----------------------------------------------------------------------------
-// Implementations
-// ----------------------------------------------------------------------------
-
-impl Section<'_> {
-    /// Formats the section for display with options.
-    pub(super) fn fmt_with(
-        &self, f: &mut fmt::Formatter, options: &Options,
-    ) -> fmt::Result {
-        f.write_str("### ")?;
-        self.category.fmt(f)?;
-        f.write_char('\n')?;
-
-        // Write all items, each on a new line
-        for item in &self.items {
-            f.write_char('\n')?;
-            f.write_str("- ")?;
-            item.fmt_with(f, options)?;
-        }
-
-        // No errors occurred
-        Ok(())
-    }
-}
-
-#[allow(clippy::must_use_candidate)]
-impl Section<'_> {
-    /// Returns the number of items.
-    #[inline]
-    pub fn len(&self) -> usize {
-        self.items.len()
-    }
-
-    /// Returns whether there are any items.
-    #[inline]
-    pub fn is_empty(&self) -> bool {
-        self.items.is_empty()
-    }
+/// Changelog options.
+#[derive(Debug, Default)]
+pub struct Options {
+    /// Commit URL prefix.
+    pub commit_url: Option<String>,
+    /// Reference URL prefix.
+    pub reference_url: Option<String>,
 }
 
 // ----------------------------------------------------------------------------
 // Trait implementations
 // ----------------------------------------------------------------------------
 
-impl From<Category> for Section<'_> {
-    /// Creates a section from a category.
-    #[inline]
-    fn from(category: Category) -> Self {
-        Self { category, items: Vec::new() }
+impl FromStr for Options {
+    type Err = Error;
+
+    /// Creates changelog options from a repository URL.
+    fn from_str(value: &str) -> Result<Self> {
+        let url = value.strip_prefix("git+").unwrap_or(value);
+        let url = url.trim_end_matches('/');
+        let url = url.strip_suffix(".git").unwrap_or(url);
+
+        // Extract owner/repository slug from GitHub URL
+        let slug = match url.strip_prefix("git@github.com:") {
+            Some(slug) => slug,
+            None => url
+                .strip_prefix("https://github.com/")
+                .ok_or(Error::Unsupported)?,
+        };
+
+        // Construct URLs for commit and reference links
+        Ok(Self {
+            commit_url: Some(format!("https://github.com/{slug}/commit/")),
+            reference_url: Some(format!("https://github.com/{slug}/issues/")),
+        })
     }
 }

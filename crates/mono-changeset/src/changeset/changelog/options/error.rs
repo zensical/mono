@@ -23,13 +23,26 @@
 
 // ----------------------------------------------------------------------------
 
-//! Cargo manifest model.
+//! Changelog options error.
 
-mod dependency;
-mod package;
-mod repository;
-mod workspace;
+use std::result;
+use thiserror::Error as ThisError;
 
-pub use dependency::Dependency;
-pub use package::Package;
-pub use workspace::Workspace;
+// ----------------------------------------------------------------------------
+// Enums
+// ----------------------------------------------------------------------------
+
+/// Changelog options error.
+#[derive(Debug, ThisError)]
+pub enum Error {
+    /// Unsupported repository URL.
+    #[error("unsupported repository URL")]
+    Unsupported,
+}
+
+// ----------------------------------------------------------------------------
+// Type aliases
+// ----------------------------------------------------------------------------
+
+/// Changelog options result.
+pub type Result<T = ()> = result::Result<T, Error>;

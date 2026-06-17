@@ -32,8 +32,10 @@ use super::revision::Revision;
 use super::scopes::Scopes;
 use super::Changeset;
 
+mod options;
 mod section;
 
+pub use options::Options;
 pub use section::{Category, Section};
 
 // ----------------------------------------------------------------------------
@@ -43,7 +45,7 @@ pub use section::{Category, Section};
 /// Changelog.
 ///
 /// Changelogs are temporary views on a [`Changeset`][], grouping revisions by
-/// category, which is deduced from the [`Kind`] of change, and ignoring any
+/// category, which is deduced from the change [`Category`], and ignoring any
 /// changes irrelevant for versioning. Breaking changes are always grouped
 /// into their own section, which comes first.
 ///
@@ -57,6 +59,8 @@ pub struct Changelog<'a> {
     scopes: &'a Scopes,
     /// Sections grouped by category.
     sections: BTreeMap<Category, Section<'a>>,
+    /// Changelog options.
+    options: Options,
 }
 
 // ----------------------------------------------------------------------------
@@ -70,6 +74,7 @@ impl Changeset<'_> {
         let mut changelog = Changelog {
             scopes: &self.scopes,
             sections: BTreeMap::default(),
+            options: Options::default(),
         };
 
         // Extend changelog with all revisions
@@ -81,6 +86,13 @@ impl Changeset<'_> {
 // ----------------------------------------------------------------------------
 
 impl<'a> Changelog<'a> {
+    /// Sets the changelog options.
+    #[must_use]
+    pub fn with_options(mut self, options: Options) -> Self {
+        self.options = options;
+        self
+    }
+
     /// Adds a revision to the changelog.
     ///
     /// Note that only relevant changes are included in the changelog, which
@@ -146,7 +158,7 @@ impl fmt::Display for Changelog<'_> {
         // Write all sections
         for section in self.sections.values() {
             f.write_str("\n\n")?;
-            section.fmt(f)?;
+            section.fmt_with(f, &self.options)?;
         }
 
         // No errors occurred

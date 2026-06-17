@@ -25,6 +25,7 @@
 
 //! Workspace.
 
+use std::borrow::Cow;
 use std::collections::btree_map::Values;
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
@@ -130,6 +131,14 @@ where
         N: AsRef<str>,
     {
         self.projects.get(self.packages.get(name.as_ref())?)
+    }
+
+    /// Returns a reference to the repository.
+    #[inline]
+    #[must_use]
+    pub fn repository(&self) -> Option<Cow<'_, str>> {
+        let project = self.projects.get(&self.path)?;
+        project.manifest.repository()
     }
 
     /// Creates an iterator over the workspace.

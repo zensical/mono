@@ -62,6 +62,9 @@ pub trait Manifest: Debug + Resolver + Writer {
     /// Returns a reference to the version.
     fn version(&self) -> Option<&Version>;
 
+    /// Returns a reference to the repository.
+    fn repository(&self) -> Option<Cow<'_, str>>;
+
     /// Returns a reference to the members.
     fn members(&self) -> Cow<'_, [String]>;
 

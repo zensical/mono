@@ -23,13 +23,35 @@
 
 // ----------------------------------------------------------------------------
 
-//! Cargo manifest model.
+//! Cargo workspace.
 
-mod dependency;
-mod package;
-mod repository;
-mod workspace;
+use serde::Deserialize;
+use std::collections::BTreeMap;
 
-pub use dependency::Dependency;
-pub use package::Package;
-pub use workspace::Workspace;
+use super::dependency::Dependency;
+use super::repository::Repository;
+
+// ----------------------------------------------------------------------------
+// Structs
+// ----------------------------------------------------------------------------
+
+/// Cargo workspace.
+#[derive(Debug, Deserialize)]
+pub struct Workspace {
+    /// Workspace members.
+    pub members: Vec<String>,
+    /// Workspace defaults.
+    pub package: Option<Defaults>,
+    /// Workspace dependencies.
+    #[serde(default)]
+    pub dependencies: BTreeMap<String, Dependency>,
+}
+
+// ----------------------------------------------------------------------------
+
+/// Cargo workspace defaults.
+#[derive(Debug, Deserialize)]
+pub struct Defaults {
+    /// Package repository.
+    pub repository: Option<Repository>,
+}

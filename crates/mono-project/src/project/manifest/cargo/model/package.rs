@@ -23,13 +23,24 @@
 
 // ----------------------------------------------------------------------------
 
-//! Cargo manifest model.
+//! Cargo package.
 
-mod dependency;
-mod package;
-mod repository;
-mod workspace;
+use semver::Version;
+use serde::Deserialize;
 
-pub use dependency::Dependency;
-pub use package::Package;
-pub use workspace::Workspace;
+use super::repository::Repository;
+
+// ----------------------------------------------------------------------------
+// Structs
+// ----------------------------------------------------------------------------
+
+/// Cargo package.
+#[derive(Debug, Deserialize)]
+pub struct Package {
+    /// Package name.
+    pub name: String,
+    /// Package version.
+    pub version: Version,
+    /// Package repository.
+    pub repository: Option<Repository>,
+}

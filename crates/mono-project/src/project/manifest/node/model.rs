@@ -23,13 +23,8 @@
 
 // ----------------------------------------------------------------------------
 
-//! Cargo manifest model.
+//! Node manifest model.
 
-mod dependency;
-mod package;
 mod repository;
-mod workspace;
 
-pub use dependency::Dependency;
-pub use package::Package;
-pub use workspace::Workspace;
+pub use repository::Repository;

@@ -23,13 +23,24 @@
 
 // ----------------------------------------------------------------------------
 
-//! Cargo manifest model.
+//! Cargo dependency.
 
-mod dependency;
-mod package;
-mod repository;
-mod workspace;
+use semver::VersionReq;
+use serde::Deserialize;
 
-pub use dependency::Dependency;
-pub use package::Package;
-pub use workspace::Workspace;
+// ----------------------------------------------------------------------------
+// Enums
+// ----------------------------------------------------------------------------
+
+/// Cargo dependency.
+#[derive(Debug, Deserialize)]
+#[serde(untagged)]
+pub enum Dependency {
+    /// Dependency with version requirement.
+    Version(VersionReq),
+    /// Dependency with information.
+    Info {
+        /// Version requirement.
+        version: Option<VersionReq>,
+    },
+}

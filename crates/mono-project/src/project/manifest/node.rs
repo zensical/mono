@@ -37,7 +37,10 @@ use crate::project::manifest::{Manifest, Resolver, Writer};
 use crate::project::workspace::Versions;
 use crate::project::{Error, Result};
 
+mod model;
 mod versions;
+
+use model::Repository;
 
 // ----------------------------------------------------------------------------
 // Structs
@@ -56,6 +59,8 @@ pub struct Node {
     pub name: String,
     /// Package version.
     pub version: Version,
+    /// Package repository.
+    pub repository: Option<Repository>,
     /// Package workspace members.
     #[serde(default)]
     pub workspaces: Vec<String>,
@@ -79,6 +84,15 @@ impl Manifest for Node {
     #[inline]
     fn version(&self) -> Option<&Version> {
         Some(&self.version)
+    }
+
+    /// Returns a reference to the repository.
+    #[inline]
+    fn repository(&self) -> Option<Cow<'_, str>> {
+        self.repository
+            .as_ref()
+            .map(Repository::url)
+            .map(Cow::Borrowed)
     }
 
     /// Returns a reference to the members.

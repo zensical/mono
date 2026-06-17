@@ -32,8 +32,10 @@ use super::revision::Revision;
 use super::scopes::Scopes;
 use super::Changeset;
 
+mod options;
 mod section;
 
+pub use options::Options;
 pub use section::{Category, Section};
 
 // ----------------------------------------------------------------------------
@@ -59,17 +61,6 @@ pub struct Changelog<'a> {
     sections: BTreeMap<Category, Section<'a>>,
     /// Changelog options.
     options: Options,
-}
-
-// ----------------------------------------------------------------------------
-
-/// Changelog options.
-#[derive(Debug, Default)]
-pub struct Options {
-    /// Commit URL prefix.
-    pub commit_url: Option<String>,
-    /// Reference URL prefix.
-    pub reference_url: Option<String>,
 }
 
 // ----------------------------------------------------------------------------

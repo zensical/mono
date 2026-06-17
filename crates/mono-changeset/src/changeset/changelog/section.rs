@@ -25,7 +25,9 @@
 
 //! Section.
 
-use std::fmt::{self, Write};
+use std::fmt::{self, Display, Write};
+
+use super::Options;
 
 mod category;
 mod item;
@@ -49,6 +51,27 @@ pub struct Section<'a> {
 // ----------------------------------------------------------------------------
 // Implementations
 // ----------------------------------------------------------------------------
+
+impl Section<'_> {
+    /// Formats the section for display with options.
+    pub(super) fn fmt_with(
+        &self, f: &mut fmt::Formatter, options: &Options,
+    ) -> fmt::Result {
+        f.write_str("### ")?;
+        self.category.fmt(f)?;
+        f.write_char('\n')?;
+
+        // Write all items, each on a new line
+        for item in &self.items {
+            f.write_char('\n')?;
+            f.write_str("- ")?;
+            item.fmt_with(f, options)?;
+        }
+
+        // No errors occurred
+        Ok(())
+    }
+}
 
 #[allow(clippy::must_use_candidate)]
 impl Section<'_> {
@@ -74,26 +97,5 @@ impl From<Category> for Section<'_> {
     #[inline]
     fn from(category: Category) -> Self {
         Self { category, items: Vec::new() }
-    }
-}
-
-// ----------------------------------------------------------------------------
-
-impl fmt::Display for Section<'_> {
-    /// Formats the section for display.
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        f.write_str("### ")?;
-        self.category.fmt(f)?;
-        f.write_char('\n')?;
-
-        // Write all items, each on a new line
-        for item in &self.items {
-            f.write_char('\n')?;
-            f.write_str("- ")?;
-            item.fmt(f)?;
-        }
-
-        // No errors occurred
-        Ok(())
     }
 }

@@ -108,8 +108,12 @@ impl Item<'_> {
         if !references.is_empty() {
             f.write_str(" (")?;
             for (i, reference) in references.iter().enumerate() {
-                f.write_char('#')?;
-                reference.fmt(f)?;
+                if let Some(url) = &options.reference_url {
+                    write!(f, "[#{reference}]({url}{reference})")?;
+                } else {
+                    f.write_char('#')?;
+                    reference.fmt(f)?;
+                }
 
                 // Write comma if not last
                 if i < references.len() - 1 {

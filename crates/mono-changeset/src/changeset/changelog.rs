@@ -68,6 +68,8 @@ pub struct Changelog<'a> {
 pub struct Options {
     /// Commit URL prefix.
     pub commit_url: Option<String>,
+    /// Reference URL prefix.
+    pub reference_url: Option<String>,
 }
 
 // ----------------------------------------------------------------------------

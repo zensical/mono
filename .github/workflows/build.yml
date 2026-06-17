@@ -50,29 +50,29 @@ jobs:
     strategy:
       matrix:
         include:
-          - name: Linux, x86_64
-            os: ubuntu-latest
+          - name: Linux, x64
+            artifact: linux-x64
+            os: ubuntu-24.04
             target: x86_64-unknown-linux-gnu
-          - name: Linux, x86
-            os: ubuntu-latest
-            target: i686-unknown-linux-gnu
-          - name: Linux, aarch64
+          - name: Linux, arm64
+            artifact: linux-arm64
             os: ubuntu-24.04-arm
             target: aarch64-unknown-linux-gnu
-          - name: Linux, armv7
-            os: ubuntu-latest
-            target: armv7-unknown-linux-gnueabihf
           - name: Windows, x64
-            os: windows-latest
+            artifact: windows-x64
+            os: windows-2022
             target: x86_64-pc-windows-msvc
-          - name: Windows, x86
-            os: windows-latest
-            target: i686-pc-windows-msvc
-          - name: macOS, x86_64
-            os: macos-13
+          - name: Windows, arm64
+            artifact: windows-arm64
+            os: windows-11-arm
+            target: aarch64-pc-windows-msvc
+          - name: macOS, x64
+            artifact: macos-x64
+            os: macos-15-intel
             target: x86_64-apple-darwin
-          - name: macOS, aarch64
-            os: macos-latest
+          - name: macOS, arm64
+            artifact: macos-arm64
+            os: macos-15
             target: aarch64-apple-darwin
 
     steps:
@@ -92,15 +92,15 @@ jobs:
           key: ${{ matrix.target }}
 
       - name: Build artifact
-        run: cargo build --release --locked
+        run: cargo build --release --locked --target ${{ matrix.target }}
 
       - name: Create artifact archive (Unix)
         shell: bash
         if: runner.os != 'Windows'
         run: |
           mkdir -p artifacts
-          tar -czf artifacts/mono-${{ matrix.target }}.tar.gz -C \
-            target/release mono
+          tar -czf artifacts/mono-${{ matrix.artifact }}.tar.gz -C \
+            target/${{ matrix.target }}/release mono
 
       - name: Create artifact archive (Windows)
         shell: pwsh
@@ -108,8 +108,8 @@ jobs:
         run: |
           mkdir -p artifacts
           Compress-Archive `
-            -Path target/release/mono.exe `
-            -DestinationPath artifacts/mono-${{ matrix.target }}.zip
+            -Path target/${{ matrix.target }}/release/mono.exe `
+            -DestinationPath artifacts/mono-${{ matrix.artifact }}.zip
 
       - name: Create artifact attestation
         if: inputs.attestations == true
@@ -121,5 +121,5 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v7
         with:
-          name: mono-${{ matrix.target }}
+          name: mono-${{ matrix.artifact }}
           path: artifacts/*

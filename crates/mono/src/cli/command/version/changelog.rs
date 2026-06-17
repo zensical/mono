@@ -29,6 +29,7 @@ use clap::Args;
 use semver::Version;
 use std::borrow::Cow;
 
+use mono_changeset::changelog::Options;
 use mono_changeset::Changeset;
 use mono_project::version::VersionExt;
 use mono_project::Manifest;
@@ -49,6 +50,9 @@ pub struct Arguments {
     /// Include version summary.
     #[arg(short, long)]
     summary: bool,
+    /// Link commits and references.
+    #[arg(short, long)]
+    links: bool,
 }
 
 // ----------------------------------------------------------------------------
@@ -79,9 +83,17 @@ where
             queue.push(Cow::Borrowed(changeset.summary()?));
         }
 
+        // Create changelog options for linking commits and references
+        let options = if self.links {
+            let res = context.workspace.repository();
+            res.and_then(|url| url.parse().ok()).unwrap_or_default()
+        } else {
+            Options::default()
+        };
+
         // Generate changelog, and append to queue if it's not empty - we also
         // need to support summary-only releases, i.e., pure version bumps
-        let changelog = changeset.to_changelog();
+        let changelog = changeset.to_changelog().with_options(options);
         if !changelog.is_empty() {
             queue.push(Cow::Owned(changelog.to_string()));
         }

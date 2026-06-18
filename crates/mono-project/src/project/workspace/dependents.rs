@@ -26,6 +26,7 @@
 //! Workspace dependents.
 
 use std::ops::Index;
+use zrx::graph::iter::{Sinks, Sources};
 use zrx::graph::traversal::IntoIter;
 use zrx::graph::Graph;
 
@@ -108,7 +109,7 @@ where
         // they point from dependencies to dependents, allowing for topological
         // traversal that visits dependencies first.
         for (n, m) in edges {
-            builder.add_edge(m, n, ())?;
+            builder.add_edge(m, n)?;
         }
 
         // Create and return dependents
@@ -131,13 +132,13 @@ where
 
     /// Creates an iterator over the projects with no dependencies.
     #[inline]
-    pub fn sources(&self) -> impl Iterator<Item = usize> {
+    pub fn sources(&self) -> Sources<'_> {
         self.graph.sources()
     }
 
     /// Creates an iterator over the projects with no dependents.
     #[inline]
-    pub fn sinks(&self) -> impl Iterator<Item = usize> {
+    pub fn sinks(&self) -> Sinks<'_> {
         self.graph.sinks()
     }
 
@@ -176,6 +177,8 @@ where
 
     /// Creates an iterator over the projects.
     fn into_iter(self) -> Self::IntoIter {
-        self.graph.traverse(self.graph.sources()).into_iter()
+        self.graph
+            .traverse(self.graph.sources().collect::<Vec<_>>())
+            .into_iter()
     }
 }

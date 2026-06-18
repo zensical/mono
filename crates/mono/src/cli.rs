@@ -132,9 +132,10 @@ where
     scopes.build()
 }
 
-/// Validates that the given path exists.
-fn valid(value: &str) -> Result<PathBuf> {
+/// Validates that the given path exists - switch back to `Result` once we
+/// moved `zrx::graph::Traversal` to `Send` + `Sync` again
+fn valid(value: &str) -> std::result::Result<PathBuf, String> {
     let path = PathBuf::from(value);
-    path.metadata()?;
+    path.metadata().map_err(|err| err.to_string())?;
     Ok(path)
 }

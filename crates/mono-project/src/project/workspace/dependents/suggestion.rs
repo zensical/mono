@@ -79,8 +79,9 @@ where
         // workspace graph. If there're dependencies between those scopes,
         // the traversal ensures that their order is respected as well.
         let iter = increments.iter().enumerate();
-        let sources =
-            iter.filter_map(|(index, increment)| increment.map(|_| index));
+        let sources = iter
+            .filter_map(|(index, increment)| increment.map(|_| index))
+            .collect::<Vec<_>>();
 
         // Traverse the graph in topological order, so version increments as
         // chosen by the caller are correctly propagated to dependents

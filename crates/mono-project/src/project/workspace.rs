@@ -95,10 +95,11 @@ where
         for res in project {
             let project = res?;
 
-            // Set project name as scope and add to workspace - if a project
-            // does not have a name, skip it as it's most likely a workspace
+            // Set project name as scope and add to workspace
             if let Some(name) = project.name() {
                 builder.add(name.to_string(), project);
+            } else {
+                builder.insert(project);
             }
         }
 

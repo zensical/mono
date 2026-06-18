@@ -92,14 +92,24 @@ where
         S: Into<String>,
     {
         let root = project.path().parent().expect("invariant").to_path_buf();
-        let name = project.name().expect("invariant");
+        let name = project.name().expect("invariant").to_string();
 
-        // Associate package name with project root and add to workspace
-        self.packages.insert(name.to_string(), root.clone());
-        self.projects.insert(root.clone(), project);
-
-        // Associate scope with project root
+        // Associate package name and scope with the project root
+        self.packages.insert(name, root.clone());
         self.scopes.insert(scope.into(), root);
+
+        // Add project to workspace
+        self.insert(project);
+    }
+
+    /// Adds an unnamed project to the workspace.
+    ///
+    /// Cargo uses workspaces to group related packages together, and packages
+    /// have their own names. However, the workspace doesn't have a name.
+    #[allow(clippy::missing_panics_doc)]
+    pub(super) fn insert(&mut self, project: Project<T>) {
+        let root = project.path().parent().expect("invariant").to_path_buf();
+        self.projects.insert(root, project);
     }
 
     /// Builds the workspace.
@@ -109,7 +119,7 @@ where
     /// Returns [`Error::Empty`] if the workspace has no projects.
     #[inline]
     pub fn build(self) -> Result<Workspace<T>> {
-        if self.projects.is_empty() {
+        if self.packages.is_empty() {
             return Err(Error::Empty);
         }
 

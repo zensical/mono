@@ -29,7 +29,7 @@ runs:
     - shell: bash
       run: |
         set -e
-        ASSET="mono-x86_64-unknown-linux-gnu.tar.gz"
+        ASSET="mono-linux-x64.tar.gz"
         VERSION=$(curl -s https://api.github.com/repos/zensical/mono/releases/latest | jq -r .tag_name)
         curl -sSL "https://github.com/zensical/mono/releases/download/${VERSION}/${ASSET}" -o mono.tar.gz
         tar -xzf mono.tar.gz

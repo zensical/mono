@@ -80,7 +80,7 @@ impl Item<'_> {
         if let Some(url) = &options.commit_url {
             write!(f, "[{short}]({url}{id})")?;
         } else {
-            short.fmt(f)?;
+            Display::fmt(&short, f)?;
         }
 
         // Write affected scopes
@@ -112,7 +112,7 @@ impl Item<'_> {
                     write!(f, "[#{reference}]({url}{reference})")?;
                 } else {
                     f.write_char('#')?;
-                    reference.fmt(f)?;
+                    Display::fmt(reference, f)?;
                 }
 
                 // Write comma if not last

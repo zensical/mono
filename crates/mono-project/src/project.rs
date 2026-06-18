@@ -26,10 +26,10 @@
 //! Project.
 
 use semver::Version;
-use std::fmt::Write;
+use std::fmt::{self, Display, Write};
 use std::iter::{Chain, Once};
 use std::path::{Path, PathBuf};
-use std::{fmt, fs, iter};
+use std::{fs, iter};
 
 mod error;
 pub mod manifest;
@@ -158,7 +158,7 @@ where
 
 // ----------------------------------------------------------------------------
 
-impl<T> fmt::Display for Project<T>
+impl<T> Display for Project<T>
 where
     T: Manifest,
 {
@@ -169,8 +169,8 @@ where
         };
 
         // Write name and version
-        name.fmt(f)?;
+        Display::fmt(name, f)?;
         f.write_char('@')?;
-        version.fmt(f)
+        Display::fmt(version, f)
     }
 }

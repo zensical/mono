@@ -25,7 +25,7 @@
 
 //! Commit.
 
-use std::fmt;
+use std::fmt::{self, Debug, Display};
 
 use super::error::Result;
 use super::id::Id;
@@ -147,14 +147,14 @@ impl Eq for Commit<'_> {}
 
 // ----------------------------------------------------------------------------
 
-impl fmt::Display for Commit<'_> {
+impl Display for Commit<'_> {
     /// Formats the commit for display.
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        self.id().fmt(f)
+        Display::fmt(&self.id(), f)
     }
 }
 
-impl fmt::Debug for Commit<'_> {
+impl Debug for Commit<'_> {
     /// Formats the commit for debugging.
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.debug_struct("Commit")

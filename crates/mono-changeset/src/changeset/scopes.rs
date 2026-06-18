@@ -26,7 +26,7 @@
 //! Scope set.
 
 use globset::GlobSet;
-use std::fmt;
+use std::fmt::{self, Debug};
 use std::ops::Index;
 use std::path::{Path, PathBuf};
 
@@ -125,7 +125,7 @@ impl Index<usize> for Scopes {
 
 // ----------------------------------------------------------------------------
 
-impl fmt::Debug for Scopes {
+impl Debug for Scopes {
     /// Formats the scope set for debugging.
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.debug_struct("Scope")

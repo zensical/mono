@@ -25,7 +25,7 @@
 
 //! Repository.
 
-use std::fmt;
+use std::fmt::{self, Debug};
 use std::path::Path;
 use std::process::Command;
 
@@ -256,7 +256,7 @@ impl Repository {
 // Trait implementations
 // ----------------------------------------------------------------------------
 
-impl fmt::Debug for Repository {
+impl Debug for Repository {
     /// Formats the repository for debugging.
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.debug_struct("Repository")

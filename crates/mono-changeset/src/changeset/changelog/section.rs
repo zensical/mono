@@ -58,7 +58,7 @@ impl Section<'_> {
         &self, f: &mut fmt::Formatter, options: &Options,
     ) -> fmt::Result {
         f.write_str("### ")?;
-        self.category.fmt(f)?;
+        Display::fmt(&self.category, f)?;
         f.write_char('\n')?;
 
         // Write all items, each on a new line

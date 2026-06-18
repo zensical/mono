@@ -25,7 +25,7 @@
 
 //! Commit trailer set.
 
-use std::fmt;
+use std::fmt::{self, Debug};
 use std::str::FromStr;
 
 use crate::repository::commit::Commit;
@@ -143,7 +143,7 @@ impl<'a> IntoIterator for &'a Trailers {
 
 // ----------------------------------------------------------------------------
 
-impl fmt::Debug for Trailers {
+impl Debug for Trailers {
     /// Formats the commit trailer set for debugging.
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.debug_map().entries(self).finish()

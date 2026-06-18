@@ -25,7 +25,7 @@
 
 //! Version increment.
 
-use std::fmt;
+use std::fmt::{self, Display};
 
 // ----------------------------------------------------------------------------
 // Enums
@@ -46,7 +46,7 @@ pub enum Increment {
 // Trait implementations
 // ----------------------------------------------------------------------------
 
-impl fmt::Display for Increment {
+impl Display for Increment {
     /// Formats the increment for display.
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {

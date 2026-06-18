@@ -28,7 +28,7 @@
 use semver::Version;
 use std::collections::btree_map::{Iter, Range};
 use std::collections::BTreeMap;
-use std::fmt;
+use std::fmt::{self, Debug};
 use std::iter::Rev;
 use std::ops::RangeBounds;
 
@@ -185,7 +185,7 @@ impl<'a> IntoIterator for &'a Versions<'a> {
 
 // ----------------------------------------------------------------------------
 
-impl fmt::Debug for Versions<'_> {
+impl Debug for Versions<'_> {
     /// Formats the version set for debugging.
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.debug_struct("Versions")

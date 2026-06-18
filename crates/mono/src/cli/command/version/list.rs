@@ -26,7 +26,6 @@
 //! List versions in reverse chronological order.
 
 use clap::Args;
-use std::fmt::Debug;
 
 use mono_project::Manifest;
 

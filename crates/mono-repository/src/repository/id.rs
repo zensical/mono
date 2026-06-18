@@ -25,7 +25,7 @@
 
 //! Object identifier.
 
-use std::fmt;
+use std::fmt::{self, Display};
 use std::ops::Deref;
 
 // ----------------------------------------------------------------------------
@@ -78,9 +78,9 @@ impl From<git2::Oid> for Id {
 
 // ----------------------------------------------------------------------------
 
-impl fmt::Display for Id {
+impl Display for Id {
     /// Formats the object identifier for display.
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        self.0.fmt(f)
+        Display::fmt(&self.0, f)
     }
 }

@@ -45,6 +45,8 @@ where
 {
     /// Project.
     project: &'a Project<T>,
+    /// Project scope.
+    scope: &'a str,
     /// Version increment suggestions.
     increments: &'a [Option<Increment>],
 }
@@ -60,9 +62,9 @@ where
     /// Invokes the given function with version increment suggestions.
     ///
     /// This method propagates version increments through the workspace graph,
-    /// starting from the packages with explicit version increments. The given
-    /// function is invoked for each package in topological order, passing it a
-    /// suggestion with a project and a set of version increment suggestions.
+    /// starting from scopes with explicit version increments. The given
+    /// function is invoked for each graph node in topological order, passing it
+    /// the mono scope, project and version increment suggestions.
     ///
     /// # Errors
     ///
@@ -72,9 +74,9 @@ where
     where
         F: Fn(Suggestion<'_, T>) -> Result<Option<Increment>>,
     {
-        // Determine the node indices of all packages with increments, as those
+        // Determine the node indices of all scopes with increments, as those
         // are the nodes from which we start the topological traversal of the
-        // workspace graph. If there're dependencies between those packages,
+        // workspace graph. If there're dependencies between those scopes,
         // the traversal ensures that their order is respected as well.
         let iter = increments.iter().enumerate();
         let sources =
@@ -108,6 +110,7 @@ where
             // function, remembering the returned version increment
             increments[node] = f(Suggestion {
                 project,
+                scope: self.scopes[node],
                 increments: &options.into_iter().collect::<Vec<_>>(),
             })?;
         }
@@ -128,6 +131,12 @@ where
     #[inline]
     pub fn project(&self) -> &Project<T> {
         self.project
+    }
+
+    /// Returns the scope of the project.
+    #[inline]
+    pub fn scope(&self) -> &str {
+        self.scope
     }
 
     /// Returns a reference to the version increment suggestions.

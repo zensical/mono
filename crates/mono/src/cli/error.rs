@@ -30,6 +30,7 @@ use thiserror::Error;
 
 use mono_changeset as changeset;
 use mono_project as project;
+use mono_project::workspace;
 use mono_repository as repository;
 
 // ----------------------------------------------------------------------------
@@ -54,6 +55,9 @@ pub enum Error {
     /// Project error.
     #[error(transparent)]
     Project(#[from] project::Error),
+    /// Workspace error.
+    #[error(transparent)]
+    Workspace(#[from] workspace::Error),
     /// Repository error.
     #[error(transparent)]
     Repository(#[from] repository::Error),

@@ -34,11 +34,12 @@ use std::{fmt, fs, iter};
 mod error;
 pub mod manifest;
 mod members;
+mod resolution;
 pub mod version;
 pub mod workspace;
 
 pub use error::{Error, Result};
-use manifest::Manifest;
+use manifest::{Manifest, ManifestFile};
 use members::Members;
 
 // ----------------------------------------------------------------------------
@@ -73,6 +74,7 @@ where
     pub fn read<P>(path: P) -> Result<Self>
     where
         P: AsRef<Path>,
+        T: ManifestFile,
     {
         let path = path.as_ref();
         let content = fs::read_to_string(path)?;
@@ -102,6 +104,25 @@ where
 }
 
 // ----------------------------------------------------------------------------
+
+impl Project<Box<dyn Manifest>> {
+    /// Attempts to resolve a project at the given path.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error::NotFound`][] in case the project could not be found,
+    /// [`Error::Ambiguous`] if multiple manifests exist in the same path, and
+    /// [`Error::Io`][] if the project could not be read.
+    #[inline]
+    pub fn resolve<P>(path: P) -> Result<Self>
+    where
+        P: AsRef<Path>,
+    {
+        resolution::read(path.as_ref())
+    }
+}
+
+// ----------------------------------------------------------------------------
 // Trait implementations
 // ----------------------------------------------------------------------------
 
@@ -122,7 +143,7 @@ impl<T> Eq for Project<T> where T: Manifest {}
 
 impl<T> IntoIterator for Project<T>
 where
-    T: Manifest,
+    T: ManifestFile,
 {
     type Item = Result<Project<T>>;
     type IntoIter = Chain<Once<Self::Item>, Members<T>>;

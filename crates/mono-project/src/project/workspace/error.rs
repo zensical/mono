@@ -23,50 +23,38 @@
 
 // ----------------------------------------------------------------------------
 
-//! Project error.
+//! Workspace error.
 
-use std::{io, process, result};
+use std::{io, result};
 use thiserror::Error;
+use zrx::graph;
+
+use crate::project;
 
 // ----------------------------------------------------------------------------
 // Enums
 // ----------------------------------------------------------------------------
 
-/// Project error.
+/// Workspace error.
 #[derive(Debug, Error)]
 pub enum Error {
     /// I/O error.
     #[error(transparent)]
     Io(#[from] io::Error),
-    /// Glob error.
+    /// Project error.
     #[error(transparent)]
-    Glob(#[from] glob::GlobError),
-    /// Pattern error.
+    Project(#[from] project::Error),
+    /// Graph error.
     #[error(transparent)]
-    Pattern(#[from] glob::PatternError),
-    /// TOML error.
-    #[error(transparent)]
-    Toml(#[from] toml::de::Error),
-    /// TOML edit error.
-    #[error(transparent)]
-    TomlEdit(#[from] toml_edit::TomlError),
-    /// JSON error.
-    #[error(transparent)]
-    Json(#[from] serde_json::Error),
-    /// Process exited with status.
-    #[error("process exited with status {0}")]
-    Status(process::ExitStatus),
-    /// Project manifest not found.
-    #[error("project manifest not found")]
-    NotFound,
-    /// Project manifest ambiguous.
-    #[error("project manifest ambiguous")]
-    Ambiguous,
+    Graph(#[from] graph::Error),
+    /// Workspace is empty.
+    #[error("workspace is empty")]
+    Empty,
 }
 
 // ----------------------------------------------------------------------------
 // Type aliases
 // ----------------------------------------------------------------------------
 
-/// Project result.
+/// Workspace result.
 pub type Result<T = ()> = result::Result<T, Error>;

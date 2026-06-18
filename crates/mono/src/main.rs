@@ -28,7 +28,8 @@
 use clap::Parser;
 use std::fs;
 
-use mono_project::{Cargo, Manifest, Node, Workspace};
+use mono_changeset::Scopes;
+use mono_project::{Cargo, Manifest, Node, Project, Workspace};
 use mono_repository::Repository;
 
 mod cli;
@@ -49,8 +50,8 @@ where
     repository: Repository,
     /// Workspace.
     workspace: Workspace<T>,
-    /// Configuration.
-    config: Config,
+    /// Scopes.
+    scopes: Scopes,
 }
 
 // ----------------------------------------------------------------------------
@@ -63,7 +64,7 @@ fn main() -> Result {
     let repository = Repository::open(&cli.directory)?;
     let path = repository.path();
 
-    // Try to load configuraiton, if any
+    // Try to load configuration, if any
     let config_path = path.join(".mono.toml");
     let config = if config_path.exists() {
         let contents = fs::read_to_string(&config_path)?;
@@ -72,11 +73,26 @@ fn main() -> Result {
         Config::default()
     };
 
-    // Initialize cargo or node workspace
+    // Initialize workspace from projects configuration
+    if !config.projects.is_empty() {
+        let mut workspace = Workspace::builder(path.canonicalize()?);
+        for (scope, root) in &config.projects {
+            workspace.add(scope, Project::resolve(path.join(root))?);
+        }
+
+        // Build workspace and execute command
+        let workspace = workspace.build()?;
+        cli.execute(repository, workspace, &config);
+        return Ok(());
+    }
+
+    // Initialize workspace from manifest files
     if let Ok(workspace) = Workspace::<Cargo>::resolve(path) {
-        cli.execute(repository, workspace, config);
+        cli.execute(repository, workspace, &config);
+        return Ok(());
     } else if let Ok(workspace) = Workspace::<Node>::resolve(path) {
-        cli.execute(repository, workspace, config);
+        cli.execute(repository, workspace, &config);
+        return Ok(());
     }
 
     // No errors occurred

@@ -23,39 +23,68 @@
 
 // ----------------------------------------------------------------------------
 
-//! List the names of all scopes in topological order.
+//! Iterator over scopes in a workspace.
 
-use clap::Args;
+use std::collections::btree_map::Iter;
+use std::path::PathBuf;
 
-use mono_project::Manifest;
+use crate::project::manifest::Manifest;
 
-use crate::cli::{Command, Result};
-use crate::Context;
+use super::Workspace;
 
 // ----------------------------------------------------------------------------
 // Structs
 // ----------------------------------------------------------------------------
 
-/// List the names of all scopes in topological order.
-#[derive(Args, Debug)]
-pub struct Arguments {}
+/// Iterator over scopes in a workspace.
+///
+/// This iterator emits scope names and paths relative to the workspace root,
+/// so they can be used together with the commit deltas from the repository.
+pub struct Scopes<'a> {
+    /// Workspace path.
+    path: &'a PathBuf,
+    /// Workspace scopes iterator.
+    iter: Iter<'a, String, PathBuf>,
+}
+
+// ----------------------------------------------------------------------------
+// Structs
+// ----------------------------------------------------------------------------
+
+impl<T> Workspace<T>
+where
+    T: Manifest,
+{
+    /// Creates an iterator over the scopes in the workspace.
+    ///
+    /// Note that scopes are represented as a tuple of path and name, since
+    /// this is what is needed to determine the scopes of a commit. In order to
+    /// obtain the [`Project`][] for a scope by its name, [`Workspace::get`]
+    /// can be used.
+    ///
+    /// [`Project`]: crate::project::Project
+    #[inline]
+    #[must_use]
+    pub fn scopes(&self) -> Scopes<'_> {
+        Scopes {
+            path: &self.path,
+            iter: self.scopes.iter(),
+        }
+    }
+}
 
 // ----------------------------------------------------------------------------
 // Trait implementations
 // ----------------------------------------------------------------------------
 
-impl<T> Command<T> for Arguments
-where
-    T: Manifest,
-{
-    /// Executes the command.
-    fn execute(&self, context: Context<T>) -> Result {
-        let dependents = context.workspace.dependents()?;
-        for node in &dependents {
-            println!("{}", dependents.scope(node));
-        }
+impl Iterator for Scopes<'_> {
+    type Item = (PathBuf, String);
 
-        // No errors occurred
-        Ok(())
+    /// Returns the next scope.
+    fn next(&mut self) -> Option<Self::Item> {
+        self.iter.next().map(|(name, path)| {
+            let path = path.strip_prefix(self.path).expect("invariant");
+            (path.to_path_buf(), name.clone())
+        })
     }
 }

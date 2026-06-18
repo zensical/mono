@@ -23,50 +23,57 @@
 
 // ----------------------------------------------------------------------------
 
-//! Project error.
+//! Project resolution.
 
-use std::{io, process, result};
-use thiserror::Error;
+use std::path::Path;
 
-// ----------------------------------------------------------------------------
-// Enums
-// ----------------------------------------------------------------------------
-
-/// Project error.
-#[derive(Debug, Error)]
-pub enum Error {
-    /// I/O error.
-    #[error(transparent)]
-    Io(#[from] io::Error),
-    /// Glob error.
-    #[error(transparent)]
-    Glob(#[from] glob::GlobError),
-    /// Pattern error.
-    #[error(transparent)]
-    Pattern(#[from] glob::PatternError),
-    /// TOML error.
-    #[error(transparent)]
-    Toml(#[from] toml::de::Error),
-    /// TOML edit error.
-    #[error(transparent)]
-    TomlEdit(#[from] toml_edit::TomlError),
-    /// JSON error.
-    #[error(transparent)]
-    Json(#[from] serde_json::Error),
-    /// Process exited with status.
-    #[error("process exited with status {0}")]
-    Status(process::ExitStatus),
-    /// Project manifest not found.
-    #[error("project manifest not found")]
-    NotFound,
-    /// Project manifest ambiguous.
-    #[error("project manifest ambiguous")]
-    Ambiguous,
-}
+use super::error::Error;
+use super::manifest::cargo::Cargo;
+use super::manifest::node::Node;
+use super::manifest::{Manifest, ManifestFile};
+use super::{Project, Result};
 
 // ----------------------------------------------------------------------------
 // Type aliases
 // ----------------------------------------------------------------------------
 
-/// Project result.
-pub type Result<T = ()> = result::Result<T, Error>;
+/// Project reader function.
+type Reader = fn(&Path) -> Result<Project<Box<dyn Manifest>>>;
+
+// ----------------------------------------------------------------------------
+// Functions
+// ----------------------------------------------------------------------------
+
+/// Resolves a project manifest from the given path.
+pub fn read(path: &Path) -> Result<Project<Box<dyn Manifest>>> {
+    let readers = [
+        (Cargo::FILE, read_typed::<Cargo> as Reader),
+        (Node::FILE, read_typed::<Node> as Reader),
+    ];
+
+    // Filter readers for which the manifest file exists in the given path and
+    // collect them into a vector of matches
+    let matches = readers
+        .into_iter()
+        .filter(|(file, _)| path.join(file).exists())
+        .collect::<Vec<_>>();
+
+    // Read the project using the matching reader, or return an error if no
+    // matches were found or if multiple matches were found
+    match matches.as_slice() {
+        [(_, read)] => read(path),
+        [] => Err(Error::NotFound),
+        _ => Err(Error::Ambiguous),
+    }
+}
+
+/// Reads a project manifest from the given path.
+fn read_typed<T>(path: &Path) -> Result<Project<Box<dyn Manifest>>>
+where
+    T: ManifestFile + 'static,
+{
+    Project::<T>::read(path.join(T::FILE)).map(|project| Project {
+        path: project.path,
+        manifest: Box::new(project.manifest) as Box<_>,
+    })
+}

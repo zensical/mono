@@ -215,6 +215,28 @@ impl Repository {
             .shorthand()
             .is_some_and(|name| ["master", "main"].contains(&name)))
     }
+
+    /// Returns the origin remote URL.
+    ///
+    /// # Errors
+    ///
+    /// This method returns [`Error::Git`] if the operation fails.
+    ///
+    /// ```
+    /// # use std::error::Error;
+    /// # fn main() -> Result<(), Box<dyn Error>> {
+    /// use mono_repository::Repository;
+    ///
+    /// // Find and open repository from current directory
+    /// let repo = Repository::open(".")?;
+    /// println!("{}", repo.url()?);
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub fn url(&self) -> Result<String> {
+        let remote = self.inner.find_remote("origin")?;
+        remote.url().ok_or(Error::Url).map(str::to_string)
+    }
 }
 
 #[allow(clippy::must_use_candidate)]

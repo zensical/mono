@@ -23,44 +23,26 @@
 
 // ----------------------------------------------------------------------------
 
-//! Repository error.
+//! Changelog options error.
 
-use std::{io, process, result};
-use thiserror::Error;
+use std::result;
+use thiserror::Error as ThisError;
 
 // ----------------------------------------------------------------------------
 // Enums
 // ----------------------------------------------------------------------------
 
-/// Repository error.
-#[derive(Debug, Error)]
+/// Changelog options error.
+#[derive(Debug, ThisError)]
 pub enum Error {
-    /// I/O error.
-    #[error(transparent)]
-    Io(#[from] io::Error),
-    /// Git error.
-    #[error(transparent)]
-    Git(#[from] git2::Error),
-    /// Version error.
-    #[error(transparent)]
-    Semver(#[from] semver::Error),
-    /// Process exited with status.
-    #[error("process exited with status {0}")]
-    Status(process::ExitStatus),
-    /// Invalid bound.
-    #[error("invalid bound")]
-    Bound,
-    /// Invalid version.
-    #[error("invalid version")]
-    Version,
-    /// Invalid URL.
-    #[error("invalid url")]
-    Url,
+    /// Unsupported repository URL.
+    #[error("unsupported repository URL")]
+    Unsupported,
 }
 
 // ----------------------------------------------------------------------------
 // Type aliases
 // ----------------------------------------------------------------------------
 
-/// Repository result.
+/// Changelog options result.
 pub type Result<T = ()> = result::Result<T, Error>;

@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Zensical and contributors
+// Copyright (c) 2025-2026 Zensical and contributors
 
 // SPDX-License-Identifier: MIT
 // Third-party contributions licensed under DCO
@@ -26,21 +26,18 @@
 //! Changeset.
 
 use mono_project::version::Increment;
-use mono_project::{Manifest, Workspace};
 use mono_repository::commit::trim_trailers;
 
 pub mod change;
 pub mod changelog;
-pub mod config;
 mod error;
 pub mod revision;
 pub mod scopes;
 
 use change::Change;
-use config::Config;
 pub use error::{Error, Result};
 use revision::Revision;
-use scopes::Scopes;
+use scopes::{Scopes, TryIntoScopes};
 
 // ----------------------------------------------------------------------------
 // Structs
@@ -71,39 +68,12 @@ impl Changeset<'_> {
     ///
     /// # Errors
     ///
-    /// This method returns [`Error::Scopes`] if the scope set can't be built
-    /// from the workspace, which should practically never happen.
-    pub fn new<T>(workspace: &Workspace<T>) -> Result<Self>
+    /// Returns [`Error::Scopes`] if the scope set can't be built.
+    pub fn new<T>(scopes: T) -> Result<Self>
     where
-        T: Manifest,
+        T: TryIntoScopes,
     {
-        Self::with_config(workspace, &Config::default())
-    }
-
-    /// Creates a changeset with the given configuration.
-    ///
-    /// # Errors
-    ///
-    /// This method returns [`Error::Scopes`] if the scope set can't be built
-    /// from the workspace and configuration, most commonly due to path issues.
-    pub fn with_config<T>(
-        workspace: &Workspace<T>, config: &Config,
-    ) -> Result<Self>
-    where
-        T: Manifest,
-    {
-        let mut builder = Scopes::builder();
-        for (path, name) in workspace.packages() {
-            builder.add(path.join("**"), name)?;
-        }
-
-        // Append additional scopes from configuration
-        for (name, path) in &config.scopes {
-            builder.add(path, name)?;
-        }
-
-        // Create scope set and version increments
-        let scopes = builder.build()?;
+        let scopes = scopes.try_into_scopes()?;
         Ok(Self {
             increments: vec![None; scopes.len()],
             scopes,
@@ -118,14 +88,14 @@ impl Changeset<'_> {
     ///
     /// # Errors
     ///
-    /// This method returns [`Error::Summary`] if no summary can be extracted,
-    /// so either there are no revisions, or the latest commit has no body. We
-    /// deliberately turn this into an error to ensure that the release process
+    /// Returns [`Error::Summary`] if no summary can be extracted, so either
+    /// there are no revisions, or the latest commit doesn't have a body. We
+    /// deliberately turn this into an error to ensure the release process
     /// can always rely on a summary being present.
     pub fn summary(&self) -> Result<&str> {
         let opt = self.revisions.first();
         let summary = opt
-            .and_then(|revision| revision.commit().body())
+            .and_then(|revision| revision.commit().body().ok().flatten())
             .ok_or(Error::Summary)?;
 
         // Trim trailers and ensure non-empty summary

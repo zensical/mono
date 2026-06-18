@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Zensical and contributors
+// Copyright (c) 2025-2026 Zensical and contributors
 
 // SPDX-License-Identifier: MIT
 // Third-party contributions licensed under DCO
@@ -25,12 +25,12 @@
 
 //! Section item.
 
-use std::fmt::{self, Write};
+use std::fmt::{self, Display, Write};
 
 use crate::changeset::revision::Revision;
 use crate::changeset::scopes::Scopes;
 
-use super::Section;
+use super::{Options, Section};
 
 // ----------------------------------------------------------------------------
 // Structs
@@ -65,14 +65,23 @@ impl<'a> Section<'a> {
 }
 
 // ----------------------------------------------------------------------------
-// Trait implementations
+// Implementations
 // ----------------------------------------------------------------------------
 
-impl fmt::Display for Item<'_> {
-    /// Formats the section item for display.
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+impl Item<'_> {
+    /// Formats the section item for display with options.
+    pub(super) fn fmt_with(
+        &self, f: &mut fmt::Formatter, options: &Options,
+    ) -> fmt::Result {
         let id = self.revision.commit().id();
-        id.short().fmt(f)?;
+
+        // Write commit identifier, optionally as link
+        let short = id.short();
+        if let Some(url) = &options.commit_url {
+            write!(f, "[{short}]({url}{id})")?;
+        } else {
+            Display::fmt(&short, f)?;
+        }
 
         // Write affected scopes
         if !self.scopes.is_empty() {
@@ -99,8 +108,12 @@ impl fmt::Display for Item<'_> {
         if !references.is_empty() {
             f.write_str(" (")?;
             for (i, reference) in references.iter().enumerate() {
-                f.write_char('#')?;
-                reference.fmt(f)?;
+                if let Some(url) = &options.reference_url {
+                    write!(f, "[#{reference}]({url}{reference})")?;
+                } else {
+                    f.write_char('#')?;
+                    Display::fmt(reference, f)?;
+                }
 
                 // Write comma if not last
                 if i < references.len() - 1 {

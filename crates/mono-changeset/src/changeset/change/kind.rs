@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Zensical and contributors
+// Copyright (c) 2025-2026 Zensical and contributors
 
 // SPDX-License-Identifier: MIT
 // Third-party contributions licensed under DCO
@@ -25,7 +25,7 @@
 
 //! Change kind.
 
-use std::fmt;
+use std::fmt::{self, Display};
 use std::str::FromStr;
 
 use super::error::{Error, Result};
@@ -87,8 +87,7 @@ impl FromStr for Kind {
     ///
     /// # Errors
     ///
-    /// This methods return [`Error::Kind`], if the string does not correspond
-    /// to a valid [`Kind`] variant.
+    /// Returns [`Error::Kind`] if the string isn't a valid [`Kind`] variant.
     ///
     /// # Examples
     ///
@@ -120,7 +119,7 @@ impl FromStr for Kind {
 
 // ----------------------------------------------------------------------------
 
-impl fmt::Display for Kind {
+impl Display for Kind {
     /// Formats the change kind for display.
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {

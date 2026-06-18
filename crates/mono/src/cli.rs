@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Zensical and contributors
+// Copyright (c) 2025-2026 Zensical and contributors
 
 // SPDX-License-Identifier: MIT
 // Third-party contributions licensed under DCO
@@ -28,9 +28,11 @@
 use clap::builder::styling::{AnsiColor, Effects};
 use clap::builder::Styles;
 use clap::Parser;
+use std::collections::BTreeMap;
 use std::path::PathBuf;
 use std::{env, process};
 
+use mono_changeset::Scopes;
 use mono_project::{Manifest, Workspace};
 use mono_repository::Repository;
 
@@ -81,13 +83,20 @@ pub struct Cli {
 
 impl Cli {
     pub fn execute<T>(
-        self, repository: Repository, workspace: Workspace<T>, config: Config,
+        self, repository: Repository, workspace: Workspace<T>, config: &Config,
     ) where
         T: Manifest,
     {
+        let scopes = match scopes(&workspace, &config.scopes) {
+            Ok(scopes) => scopes,
+            Err(err) => {
+                eprintln!("Error: {err}");
+                process::exit(1)
+            }
+        };
         match self
             .command
-            .execute(Context { repository, workspace, config })
+            .execute(Context { repository, workspace, scopes })
         {
             Ok(()) => process::exit(0),
             Err(err) => {
@@ -102,9 +111,31 @@ impl Cli {
 // Functions
 // ----------------------------------------------------------------------------
 
-/// Validates that the given path exists.
-fn valid(value: &str) -> Result<PathBuf> {
+/// Creates a scope set from the workspace and configured scopes.
+fn scopes<T>(
+    workspace: &Workspace<T>, config: &BTreeMap<String, PathBuf>,
+) -> mono_changeset::scopes::Result<Scopes>
+where
+    T: Manifest,
+{
+    let mut scopes = Scopes::builder();
+    for (path, name) in workspace.scopes() {
+        scopes.add(path.join("**"), name)?;
+    }
+
+    // Add configured scopes
+    for (name, path) in config {
+        scopes.add(path, name)?;
+    }
+
+    // Return scope set
+    scopes.build()
+}
+
+/// Validates that the given path exists - switch back to `Result` once we
+/// moved `zrx::graph::Traversal` to `Send` + `Sync` again
+fn valid(value: &str) -> std::result::Result<PathBuf, String> {
     let path = PathBuf::from(value);
-    path.metadata()?;
+    path.metadata().map_err(|err| err.to_string())?;
     Ok(path)
 }

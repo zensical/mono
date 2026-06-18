@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Zensical and contributors
+// Copyright (c) 2025-2026 Zensical and contributors
 
 // SPDX-License-Identifier: MIT
 // Third-party contributions licensed under DCO
@@ -30,60 +30,58 @@ use serde_json::{Map, Value};
 use crate::project::workspace::Versions;
 use crate::project::Result;
 
-use super::Node;
-
 // ----------------------------------------------------------------------------
-// Implementations
+// Functions
 // ----------------------------------------------------------------------------
 
-impl Versions<'_, Node> {
-    /// Updates package versions in the given manifest content.
-    ///
-    /// # Errors
-    ///
-    /// This method returns [`Error::Json`][] if parsing or printing fails.
-    ///
-    /// [`Error::Json`]: crate::project::Error::Json
-    pub fn update<S>(&self, content: S) -> Result<String>
-    where
-        S: AsRef<str>,
-    {
-        let content = content.as_ref();
-        let mut doc = content.parse::<Value>()?;
+/// Updates package versions in the given manifest content.
+///
+/// # Errors
+///
+/// Returns [`Error::Json`][] if parsing or printing fails.
+///
+/// [`Error::Json`]: crate::project::Error::Json
+pub fn update<S>(content: S, versions: &Versions<'_>) -> Result<String>
+where
+    S: AsRef<str>,
+{
+    let content = content.as_ref();
+    let mut doc = content.parse::<Value>()?;
 
-        // Apply updates to the document
-        if let Some(map) = doc.as_object_mut() {
-            self.update_version(map);
-            self.update_dependencies(map);
-        }
-
-        // Return updated document - ensure trailing line feed
-        let content = serde_json::to_string_pretty(&doc)?;
-        Ok(format!("{content}\n"))
+    // Apply updates to the document
+    if let Some(map) = doc.as_object_mut() {
+        update_version(map, versions);
+        update_dependencies(map, versions);
     }
 
-    /// Updates `version` with a new version.
-    fn update_version(&self, doc: &mut Map<String, Value>) {
-        if let Some(name) = doc.get("name").and_then(|item| item.as_str()) {
-            if let Some(version) = self.get(name) {
-                doc.insert(
-                    String::from("version"),
-                    Value::String(version.to_string()),
-                );
-            }
+    // Return updated document - ensure trailing line feed
+    let content = serde_json::to_string_pretty(&doc)?;
+    Ok(format!("{content}\n"))
+}
+
+// ----------------------------------------------------------------------------
+
+/// Updates `version` with a new version.
+fn update_version(doc: &mut Map<String, Value>, versions: &Versions<'_>) {
+    if let Some(name) = doc.get("name").and_then(|item| item.as_str()) {
+        if let Some(version) = versions.get(name) {
+            doc.insert(
+                String::from("version"),
+                Value::String(version.to_string()),
+            );
         }
     }
+}
 
-    /// Updates `dependencies` and `devDependencies` with new versions
-    fn update_dependencies(&self, doc: &mut Map<String, Value>) {
-        for section in ["dependencies", "devDependencies"] {
-            if let Some(map) =
-                doc.get_mut(section).and_then(|value| value.as_object_mut())
-            {
-                for (name, value) in map.iter_mut() {
-                    if let Some(version) = self.get(name.as_str()) {
-                        *value = Value::String(format!("^{version}"));
-                    }
+/// Updates `dependencies` and `devDependencies` with new versions
+fn update_dependencies(doc: &mut Map<String, Value>, versions: &Versions<'_>) {
+    for section in ["dependencies", "devDependencies"] {
+        if let Some(map) =
+            doc.get_mut(section).and_then(|value| value.as_object_mut())
+        {
+            for (name, value) in map.iter_mut() {
+                if let Some(version) = versions.get(name.as_str()) {
+                    *value = Value::String(format!("^{version}"));
                 }
             }
         }

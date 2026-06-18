@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Zensical and contributors
+// Copyright (c) 2025-2026 Zensical and contributors
 
 // SPDX-License-Identifier: MIT
 // Third-party contributions licensed under DCO
@@ -28,7 +28,7 @@
 use semver::Version;
 use std::collections::btree_map::{Iter, Range};
 use std::collections::BTreeMap;
-use std::fmt;
+use std::fmt::{self, Debug};
 use std::iter::Rev;
 use std::ops::RangeBounds;
 
@@ -68,10 +68,10 @@ impl Repository {
     ///
     /// # Errors
     ///
-    /// This method returns [`Error::Git`] if the operation fails.
+    /// Returns [`Error::Git`] if the operation fails.
     pub fn versions(&self) -> Result<Versions<'_>> {
         let tags = self.inner.tag_names(Some("v[0-9]*.[0-9]*.[0-9]**"))?;
-        let iter = tags.iter().flatten().map(|name| {
+        let iter = tags.iter().flatten().flatten().map(|name| {
             let version = name.trim_start_matches('v').parse()?;
             Ok((version, self.find(name)?.id()))
         });
@@ -113,8 +113,8 @@ impl Versions<'_> {
     ///
     /// # Errors
     ///
-    /// This method returns [`Error::Version`] if the given version doesn't
-    /// exist, or [`Error::Git`] if the operation fails on the repository.
+    /// Returns [`Error::Version`] if the given version doesn't exist, or
+    /// [`Error::Git`] if the operation fails on the repository.
     pub fn commits(&self, version: Option<&Version>) -> Result<Commits<'_>> {
         if let Some(version) = version {
             if !self.tags.contains_key(version) {
@@ -185,7 +185,7 @@ impl<'a> IntoIterator for &'a Versions<'a> {
 
 // ----------------------------------------------------------------------------
 
-impl fmt::Debug for Versions<'_> {
+impl Debug for Versions<'_> {
     /// Formats the version set for debugging.
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.debug_struct("Versions")

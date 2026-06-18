@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Zensical and contributors
+// Copyright (c) 2025-2026 Zensical and contributors
 
 // SPDX-License-Identifier: MIT
 // Third-party contributions licensed under DCO
@@ -23,20 +23,26 @@
 
 // ----------------------------------------------------------------------------
 
-//! Configuration.
+//! Changelog options error.
 
-use serde::Deserialize;
-use std::collections::BTreeMap;
-use std::path::PathBuf;
+use std::result;
+use thiserror::Error as ThisError;
 
 // ----------------------------------------------------------------------------
-// Structs
+// Enums
 // ----------------------------------------------------------------------------
 
-/// Configuration.
-#[derive(Debug, Default, Deserialize)]
-pub struct Config {
-    /// Additional scopes.
-    #[serde(default)]
-    pub scopes: BTreeMap<String, PathBuf>,
+/// Changelog options error.
+#[derive(Debug, ThisError)]
+pub enum Error {
+    /// Unsupported repository URL.
+    #[error("unsupported repository URL")]
+    Unsupported,
 }
+
+// ----------------------------------------------------------------------------
+// Type aliases
+// ----------------------------------------------------------------------------
+
+/// Changelog options result.
+pub type Result<T = ()> = result::Result<T, Error>;

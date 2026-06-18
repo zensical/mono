@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Zensical and contributors
+// Copyright (c) 2025-2026 Zensical and contributors
 
 // SPDX-License-Identifier: MIT
 // Third-party contributions licensed under DCO
@@ -23,7 +23,7 @@
 
 // ----------------------------------------------------------------------------
 
-//! Iterator over packages in a workspace.
+//! Iterator over scopes in a workspace.
 
 use std::collections::btree_map::Iter;
 use std::path::PathBuf;
@@ -36,14 +36,14 @@ use super::Workspace;
 // Structs
 // ----------------------------------------------------------------------------
 
-/// Iterator over packages in a workspace.
+/// Iterator over scopes in a workspace.
 ///
-/// This iterator emits package names and paths relative to the workspace root,
+/// This iterator emits scope names and paths relative to the workspace root,
 /// so they can be used together with the commit deltas from the repository.
-pub struct Packages<'a> {
+pub struct Scopes<'a> {
     /// Workspace path.
     path: &'a PathBuf,
-    /// Workspace packages iterator.
+    /// Workspace scopes iterator.
     iter: Iter<'a, String, PathBuf>,
 }
 
@@ -55,20 +55,20 @@ impl<T> Workspace<T>
 where
     T: Manifest,
 {
-    /// Creates an iterator over the packages in the workspace.
+    /// Creates an iterator over the scopes in the workspace.
     ///
-    /// Note that packages are represented as a tuple of path and name, since
+    /// Note that scopes are represented as a tuple of path and name, since
     /// this is what is needed to determine the scopes of a commit. In order to
-    /// obtain the [`Project`][] for a package by its name, [`Workspace::get`]
+    /// obtain the [`Project`][] for a scope by its name, [`Workspace::get`]
     /// can be used.
     ///
     /// [`Project`]: crate::project::Project
     #[inline]
     #[must_use]
-    pub fn packages(&self) -> Packages<'_> {
-        Packages {
+    pub fn scopes(&self) -> Scopes<'_> {
+        Scopes {
             path: &self.path,
-            iter: self.packages.iter(),
+            iter: self.scopes.iter(),
         }
     }
 }
@@ -77,10 +77,10 @@ where
 // Trait implementations
 // ----------------------------------------------------------------------------
 
-impl Iterator for Packages<'_> {
+impl Iterator for Scopes<'_> {
     type Item = (PathBuf, String);
 
-    /// Returns the next package.
+    /// Returns the next scope.
     fn next(&mut self) -> Option<Self::Item> {
         self.iter.next().map(|(name, path)| {
             let path = path.strip_prefix(self.path).expect("invariant");

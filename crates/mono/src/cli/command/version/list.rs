@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Zensical and contributors
+// Copyright (c) 2025-2026 Zensical and contributors
 
 // SPDX-License-Identifier: MIT
 // Third-party contributions licensed under DCO
@@ -26,7 +26,6 @@
 //! List versions in reverse chronological order.
 
 use clap::Args;
-use std::fmt::Debug;
 
 use mono_project::Manifest;
 

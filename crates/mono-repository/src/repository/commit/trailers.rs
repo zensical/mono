@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Zensical and contributors
+// Copyright (c) 2025-2026 Zensical and contributors
 
 // SPDX-License-Identifier: MIT
 // Third-party contributions licensed under DCO
@@ -25,7 +25,7 @@
 
 //! Commit trailer set.
 
-use std::fmt;
+use std::fmt::{self, Debug};
 use std::str::FromStr;
 
 use crate::repository::commit::Commit;
@@ -53,11 +53,11 @@ impl Commit<'_> {
     ///
     /// # Errors
     ///
-    /// This method returns [`Error::Git`] if the operation fails.
+    /// Returns [`Error::Git`] if the operation fails.
     #[allow(clippy::missing_panics_doc)]
     #[inline]
     pub fn trailers(&self) -> Result<Trailers> {
-        Trailers::from_str(self.inner.body().unwrap_or_default())
+        Trailers::from_str(self.body()?.unwrap_or_default())
     }
 }
 
@@ -118,7 +118,7 @@ impl FromStr for Trailers {
     ///
     /// # Errors
     ///
-    /// This method returns [`Error::Git`] if the operation fails.
+    /// Returns [`Error::Git`] if the operation fails.
     fn from_str(value: &str) -> Result<Self> {
         // We must add two line feeds to the message or the trailers wouldn't be
         // discoverable, as git assumes that we pass the entire commit message
@@ -143,7 +143,7 @@ impl<'a> IntoIterator for &'a Trailers {
 
 // ----------------------------------------------------------------------------
 
-impl fmt::Debug for Trailers {
+impl Debug for Trailers {
     /// Formats the commit trailer set for debugging.
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.debug_map().entries(self).finish()

@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Zensical and contributors
+// Copyright (c) 2025-2026 Zensical and contributors
 
 // SPDX-License-Identifier: MIT
 // Third-party contributions licensed under DCO
@@ -28,7 +28,7 @@
 use std::marker::PhantomData;
 
 use super::error::Result;
-use super::manifest::Manifest;
+use super::manifest::{Manifest, ManifestFile};
 use super::Project;
 
 mod paths;
@@ -87,7 +87,7 @@ where
 
 impl<T> Iterator for Members<T>
 where
-    T: Manifest,
+    T: ManifestFile,
 {
     type Item = Result<Project<T>>;
 

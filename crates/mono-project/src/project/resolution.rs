@@ -23,41 +23,57 @@
 
 // ----------------------------------------------------------------------------
 
-//! Delta.
+//! Project resolution.
 
-use std::path::PathBuf;
+use std::path::Path;
+
+use super::error::Error;
+use super::manifest::cargo::Cargo;
+use super::manifest::node::Node;
+use super::manifest::{Manifest, ManifestFile};
+use super::{Project, Result};
 
 // ----------------------------------------------------------------------------
-// Enums
+// Type aliases
 // ----------------------------------------------------------------------------
 
-/// Delta.
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub enum Delta {
-    /// Path was created.
-    Create { path: PathBuf },
-    /// Path was modified.
-    Modify { path: PathBuf },
-    /// Path was renamed.
-    Rename { from: PathBuf, path: PathBuf },
-    /// Path was deleted.
-    Delete { path: PathBuf },
+/// Project reader function.
+type Reader = fn(&Path) -> Result<Project<Box<dyn Manifest>>>;
+
+// ----------------------------------------------------------------------------
+// Functions
+// ----------------------------------------------------------------------------
+
+/// Resolves a project manifest from the given path.
+pub fn read(path: &Path) -> Result<Project<Box<dyn Manifest>>> {
+    let readers = [
+        (Cargo::FILE, read_typed::<Cargo> as Reader),
+        (Node::FILE, read_typed::<Node> as Reader),
+    ];
+
+    // Filter readers for which the manifest file exists in the given path and
+    // collect them into a vector of matches
+    let matches = readers
+        .into_iter()
+        .filter(|(file, _)| path.join(file).exists())
+        .collect::<Vec<_>>();
+
+    // Read the project using the matching reader, or return an error if no
+    // matches were found or if multiple matches were found
+    match matches.as_slice() {
+        [(_, read)] => read(path),
+        [] => Err(Error::NotFound),
+        _ => Err(Error::Ambiguous),
+    }
 }
 
-// ----------------------------------------------------------------------------
-// Trait implementations
-// ----------------------------------------------------------------------------
-
-#[allow(clippy::must_use_candidate)]
-impl Delta {
-    /// Returns a reference to the path of the delta.
-    #[inline]
-    pub fn path(&self) -> &PathBuf {
-        match self {
-            Delta::Create { path, .. } => path,
-            Delta::Modify { path, .. } => path,
-            Delta::Rename { path, .. } => path,
-            Delta::Delete { path, .. } => path,
-        }
-    }
+/// Reads a project manifest from the given path.
+fn read_typed<T>(path: &Path) -> Result<Project<Box<dyn Manifest>>>
+where
+    T: ManifestFile + 'static,
+{
+    Project::<T>::read(path.join(T::FILE)).map(|project| Project {
+        path: project.path,
+        manifest: Box::new(project.manifest) as Box<_>,
+    })
 }

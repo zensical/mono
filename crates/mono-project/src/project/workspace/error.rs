@@ -23,41 +23,38 @@
 
 // ----------------------------------------------------------------------------
 
-//! Delta.
+//! Workspace error.
 
-use std::path::PathBuf;
+use std::{io, result};
+use thiserror::Error;
+use zrx::graph;
+
+use crate::project;
 
 // ----------------------------------------------------------------------------
 // Enums
 // ----------------------------------------------------------------------------
 
-/// Delta.
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub enum Delta {
-    /// Path was created.
-    Create { path: PathBuf },
-    /// Path was modified.
-    Modify { path: PathBuf },
-    /// Path was renamed.
-    Rename { from: PathBuf, path: PathBuf },
-    /// Path was deleted.
-    Delete { path: PathBuf },
+/// Workspace error.
+#[derive(Debug, Error)]
+pub enum Error {
+    /// I/O error.
+    #[error(transparent)]
+    Io(#[from] io::Error),
+    /// Project error.
+    #[error(transparent)]
+    Project(#[from] project::Error),
+    /// Graph error.
+    #[error(transparent)]
+    Graph(#[from] graph::Error),
+    /// Workspace is empty.
+    #[error("workspace is empty")]
+    Empty,
 }
 
 // ----------------------------------------------------------------------------
-// Trait implementations
+// Type aliases
 // ----------------------------------------------------------------------------
 
-#[allow(clippy::must_use_candidate)]
-impl Delta {
-    /// Returns a reference to the path of the delta.
-    #[inline]
-    pub fn path(&self) -> &PathBuf {
-        match self {
-            Delta::Create { path, .. } => path,
-            Delta::Modify { path, .. } => path,
-            Delta::Rename { path, .. } => path,
-            Delta::Delete { path, .. } => path,
-        }
-    }
-}
+/// Workspace result.
+pub type Result<T = ()> = result::Result<T, Error>;

@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Zensical and contributors
+// Copyright (c) 2025-2026 Zensical and contributors
 
 // SPDX-License-Identifier: MIT
 // Third-party contributions licensed under DCO
@@ -29,11 +29,11 @@ use semver::{Version, VersionReq};
 use serde::Deserialize;
 use std::borrow::Cow;
 use std::collections::BTreeMap;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use std::process::{Command, Stdio};
 use std::str::FromStr;
 
-use crate::project::manifest::{Manifest, Resolver, Writer};
+use crate::project::manifest::{Manifest, ManifestFile};
 use crate::project::workspace::Versions;
 use crate::project::{Error, Result};
 
@@ -89,32 +89,14 @@ impl Manifest for Node {
 
     /// Creates an iterator over the dependencies.
     #[inline]
-    fn dependencies(&self) -> impl Iterator<Item = &str> {
-        self.dependencies.keys().map(String::as_str)
+    fn dependencies(&self) -> Box<dyn Iterator<Item = &str> + '_> {
+        Box::new(self.dependencies.keys().map(String::as_str))
     }
-}
 
-// ----------------------------------------------------------------------------
-
-impl Resolver for Node {
-    /// Resolves the manifest path from the given path.
-    #[inline]
-    fn resolve<P>(path: P) -> Result<PathBuf>
-    where
-        P: AsRef<Path>,
-    {
-        Ok(path.as_ref().join("package.json"))
-    }
-}
-
-impl Writer for Node {
     /// Updates the given manifest's content with new package versions.
     #[inline]
-    fn update<S>(content: S, versions: &Versions<Self>) -> Result<String>
-    where
-        S: AsRef<str>,
-    {
-        versions.update(content)
+    fn update(&self, content: &str, versions: &Versions<'_>) -> Result<String> {
+        versions::update(content, versions)
     }
 
     /// Synchronizes the manifest after update.
@@ -123,10 +105,7 @@ impl Writer for Node {
     /// synchronize `package-lock.json` with the updated versions. This ensures
     /// that the lock file reflects the changes made to the manifest, or there
     /// will be inconsistencies between the manifest and the lock file.
-    fn sync<P>(path: P) -> Result
-    where
-        P: AsRef<Path>,
-    {
+    fn sync(&self, path: &Path) -> Result {
         // Explicitly update `package-lock.json` for synchronization
         let status = Command::new("npm")
             .args(["install", "--package-lock-only", "--ignore-scripts"])
@@ -137,6 +116,11 @@ impl Writer for Node {
         // Return error with status code if unsuccessful
         status.success().then_some(()).ok_or(Error::Status(status))
     }
+}
+
+impl ManifestFile for Node {
+    /// Manifest file name.
+    const FILE: &'static str = "package.json";
 }
 
 // ----------------------------------------------------------------------------

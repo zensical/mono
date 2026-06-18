@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Zensical and contributors
+// Copyright (c) 2025-2026 Zensical and contributors
 
 // SPDX-License-Identifier: MIT
 // Third-party contributions licensed under DCO
@@ -26,7 +26,7 @@
 //! Change.
 
 use std::collections::BTreeSet;
-use std::fmt::{self, Write};
+use std::fmt::{self, Display, Write};
 use std::str::FromStr;
 
 use mono_project::version::Increment;
@@ -133,9 +133,9 @@ impl FromStr for Change {
     ///
     /// # Errors
     ///
-    /// This methods return [`Error::Format`][], if the string does not adhere
-    /// to conventional commits format (without scopes), and [`Error::Kind`][],
-    /// if the string does not correspond to a valid [`Kind`] variant.
+    /// Returns [`Error::Format`] if the string doesn't match conventional
+    /// commits format (without scopes), and [`Error::Kind`] if the string
+    /// isn't a valid [`Kind`] variant.
     ///
     /// # Examples
     ///
@@ -203,24 +203,24 @@ impl FromStr for Change {
 
 // ----------------------------------------------------------------------------
 
-impl fmt::Display for Change {
+impl Display for Change {
     /// Formats the change for display.
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        self.kind.fmt(f)?;
+        Display::fmt(&self.kind, f)?;
         if self.is_breaking {
             f.write_char('!')?;
         }
 
         // Write summary
         f.write_str(": ")?;
-        self.summary.fmt(f)?;
+        Display::fmt(&self.summary, f)?;
 
         // Write references
         if !self.references.is_empty() {
             f.write_str(" (")?;
             for (i, reference) in self.references.iter().enumerate() {
                 f.write_char('#')?;
-                reference.fmt(f)?;
+                Display::fmt(reference, f)?;
 
                 // Write comma if not last
                 if i < self.references.len() - 1 {

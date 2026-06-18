@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Zensical and contributors
+// Copyright (c) 2025-2026 Zensical and contributors
 
 // SPDX-License-Identifier: MIT
 // Third-party contributions licensed under DCO
@@ -29,6 +29,7 @@ use clap::Args;
 use semver::Version;
 use std::borrow::Cow;
 
+use mono_changeset::changelog::Options;
 use mono_changeset::Changeset;
 use mono_project::version::VersionExt;
 use mono_project::Manifest;
@@ -49,6 +50,9 @@ pub struct Arguments {
     /// Include version summary.
     #[arg(short, long)]
     summary: bool,
+    /// Link commits and references.
+    #[arg(short, long)]
+    links: bool,
 }
 
 // ----------------------------------------------------------------------------
@@ -64,10 +68,7 @@ where
         // Resolve versions and create changeset, then determine all commits
         // that are either part of the given version or yet unreleased
         let versions = context.repository.versions()?;
-        let mut changeset = Changeset::with_config(
-            &context.workspace,
-            &context.config.changeset,
-        )?;
+        let mut changeset = Changeset::new(context.scopes)?;
         for res in versions.commits(self.version.as_ref())? {
             changeset.add(res?)?;
         }
@@ -79,9 +80,16 @@ where
             queue.push(Cow::Borrowed(changeset.summary()?));
         }
 
+        // Create changelog options for linking commits and references
+        let options = if self.links {
+            context.repository.url()?.parse().unwrap_or_default()
+        } else {
+            Options::default()
+        };
+
         // Generate changelog, and append to queue if it's not empty - we also
         // need to support summary-only releases, i.e., pure version bumps
-        let changelog = changeset.to_changelog();
+        let changelog = changeset.to_changelog().with_options(options);
         if !changelog.is_empty() {
             queue.push(Cow::Owned(changelog.to_string()));
         }

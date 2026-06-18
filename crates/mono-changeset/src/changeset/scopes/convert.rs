@@ -23,41 +23,65 @@
 
 // ----------------------------------------------------------------------------
 
-//! Delta.
+//! Scope set conversions.
 
-use std::path::PathBuf;
+use mono_project::{Manifest, Workspace};
+
+use super::builder::Builder;
+use super::error::Result;
+use super::Scopes;
 
 // ----------------------------------------------------------------------------
-// Enums
+// Traits
 // ----------------------------------------------------------------------------
 
-/// Delta.
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub enum Delta {
-    /// Path was created.
-    Create { path: PathBuf },
-    /// Path was modified.
-    Modify { path: PathBuf },
-    /// Path was renamed.
-    Rename { from: PathBuf, path: PathBuf },
-    /// Path was deleted.
-    Delete { path: PathBuf },
+/// Attempt conversion into [`Scopes`].
+///
+/// This trait is primarily provided for a more convenient API when creating
+/// changesets. It allows callers to pass either existing [`Scopes`], a scope
+/// [`Builder`], or a [`Workspace`] from which the default scopes are derived
+/// automatically.
+pub trait TryIntoScopes {
+    /// Attempts to convert into a scope set.
+    ///
+    /// # Errors
+    ///
+    /// In case conversion fails, an error should be returned.
+    fn try_into_scopes(self) -> Result<Scopes>;
 }
 
 // ----------------------------------------------------------------------------
-// Trait implementations
+// Implementations
 // ----------------------------------------------------------------------------
 
-#[allow(clippy::must_use_candidate)]
-impl Delta {
-    /// Returns a reference to the path of the delta.
+impl TryIntoScopes for Scopes {
+    /// Creates a scope set.
     #[inline]
-    pub fn path(&self) -> &PathBuf {
-        match self {
-            Delta::Create { path, .. } => path,
-            Delta::Modify { path, .. } => path,
-            Delta::Rename { path, .. } => path,
-            Delta::Delete { path, .. } => path,
+    fn try_into_scopes(self) -> Result<Scopes> {
+        Ok(self)
+    }
+}
+
+impl TryIntoScopes for Builder {
+    /// Creates a scope set from a scope set builder.
+    #[inline]
+    fn try_into_scopes(self) -> Result<Scopes> {
+        self.build()
+    }
+}
+
+impl<T> TryIntoScopes for &Workspace<T>
+where
+    T: Manifest,
+{
+    /// Creates a scope set from a workspace reference.
+    fn try_into_scopes(self) -> Result<Scopes> {
+        let mut builder = Scopes::builder();
+        for (path, name) in self.scopes() {
+            builder.add(path.join("**"), name)?;
         }
+
+        // Create scope set from builder
+        builder.build()
     }
 }

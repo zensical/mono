@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Zensical and contributors
+// Copyright (c) 2025-2026 Zensical and contributors
 
 // SPDX-License-Identifier: MIT
 // Third-party contributions licensed under DCO
@@ -31,7 +31,6 @@ mod changeset;
 
 pub use changeset::change::{self, Change};
 pub use changeset::changelog::{self, Changelog};
-pub use changeset::config::{self, Config};
 pub use changeset::revision::{self, Revision};
 pub use changeset::scopes::{self, Scopes};
 pub use changeset::{Changeset, Error, Result};

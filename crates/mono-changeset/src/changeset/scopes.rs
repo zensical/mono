@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Zensical and contributors
+// Copyright (c) 2025-2026 Zensical and contributors
 
 // SPDX-License-Identifier: MIT
 // Third-party contributions licensed under DCO
@@ -26,14 +26,16 @@
 //! Scope set.
 
 use globset::GlobSet;
-use std::fmt;
+use std::fmt::{self, Debug};
 use std::ops::Index;
 use std::path::{Path, PathBuf};
 
 mod builder;
+mod convert;
 mod error;
 
 pub use builder::Builder;
+pub use convert::TryIntoScopes;
 pub use error::{Error, Result};
 
 // ----------------------------------------------------------------------------
@@ -58,21 +60,6 @@ pub struct Scopes {
 // ----------------------------------------------------------------------------
 
 impl Scopes {
-    /// Creates a scope set builder.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use mono_changeset::Scopes;
-    ///
-    /// // Create scope set builder
-    /// let mut builder = Scopes::builder();
-    #[inline]
-    #[must_use]
-    pub fn builder() -> Builder {
-        Builder::new()
-    }
-
     /// Returns the longest matching scope for the given path.
     ///
     /// # Examples
@@ -138,7 +125,7 @@ impl Index<usize> for Scopes {
 
 // ----------------------------------------------------------------------------
 
-impl fmt::Debug for Scopes {
+impl Debug for Scopes {
     /// Formats the scope set for debugging.
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.debug_struct("Scope")

@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Zensical and contributors
+// Copyright (c) 2025-2026 Zensical and contributors
 
 // SPDX-License-Identifier: MIT
 // Third-party contributions licensed under DCO
@@ -82,15 +82,19 @@ impl<'a> Changeset<'a> {
     ///
     /// # Errors
     ///
-    /// This method returns [`Error::Repository`][] if the commit deltas can't
-    /// be retrieved. If the commit summary couldn't be parsed, the commit will
-    /// be ignored, since there are several types of commits that will not make
-    /// it into the changeset, e.g., merge commits.
+    /// Returns [`Error::Repository`][] if a commit's deltas can't be fetched.
+    /// If a commit's message couldn't be parsed, it's just ignored, since
+    /// there are several types of commits that will not make it into the
+    /// changeset, e.g., merge commits.
     ///
     /// [`Error::Repository`]: crate::changeset::Error::Repository
     pub fn add(&mut self, commit: Commit<'a>) -> Result {
-        if let Ok(change) = Change::from_str(commit.summary()) {
-            // Retrieve affected scopes from commit
+        let Some(summary) = commit.summary()? else {
+            return Ok(());
+        };
+
+        // Retrieve affected scopes from commit
+        if let Ok(change) = Change::from_str(summary) {
             let mut scopes = BTreeSet::new();
             for delta in commit.deltas()? {
                 scopes.extend(self.scopes.get(delta.path()));
@@ -122,10 +126,10 @@ impl<'a> Changeset<'a> {
     ///
     /// # Errors
     ///
-    /// This method returns [`Error::Repository`][] if a commit's deltas can't
-    /// be retrieved. If a commit's message couldn't be parsed, it will just be
-    /// ignored, since there are several types of commits that will not make it
-    /// into the changset, e.g., merge commits.
+    /// Returns [`Error::Repository`][] if a commit's deltas can't be fetched.
+    /// If a commit's message couldn't be parsed, it's just ignored, since
+    /// there are several types of commits that will not make it into the
+    /// changeset, e.g., merge commits.
     ///
     /// [`Error::Repository`]: crate::changeset::Error::Repository
     pub fn extend<T>(&mut self, iter: T) -> Result

@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Zensical and contributors
+// Copyright (c) 2025-2026 Zensical and contributors
 
 // SPDX-License-Identifier: MIT
 // Third-party contributions licensed under DCO
@@ -26,14 +26,16 @@
 //! Changelog.
 
 use std::collections::BTreeMap;
-use std::fmt;
+use std::fmt::{self, Display};
 
 use super::revision::Revision;
 use super::scopes::Scopes;
 use super::Changeset;
 
+mod options;
 mod section;
 
+pub use options::Options;
 pub use section::{Category, Section};
 
 // ----------------------------------------------------------------------------
@@ -43,12 +45,12 @@ pub use section::{Category, Section};
 /// Changelog.
 ///
 /// Changelogs are temporary views on a [`Changeset`][], grouping revisions by
-/// category, which is deduced from the [`Kind`] of change, and ignoring any
+/// category, which is deduced from the change [`Category`], and ignoring any
 /// changes irrelevant for versioning. Breaking changes are always grouped
 /// into their own section, which comes first.
 ///
 /// The changelog is solely intended for printing, which is why it implements
-/// [`fmt::Display`]. The output format is Markdown, as supported by GitHub.
+/// [`Display`]. The output format is Markdown, as supported by GitHub.
 ///
 /// [`Changeset`]: crate::changeset::Changeset
 #[derive(Debug)]
@@ -57,6 +59,8 @@ pub struct Changelog<'a> {
     scopes: &'a Scopes,
     /// Sections grouped by category.
     sections: BTreeMap<Category, Section<'a>>,
+    /// Changelog options.
+    options: Options,
 }
 
 // ----------------------------------------------------------------------------
@@ -70,6 +74,7 @@ impl Changeset<'_> {
         let mut changelog = Changelog {
             scopes: &self.scopes,
             sections: BTreeMap::default(),
+            options: Options::default(),
         };
 
         // Extend changelog with all revisions
@@ -81,6 +86,13 @@ impl Changeset<'_> {
 // ----------------------------------------------------------------------------
 
 impl<'a> Changelog<'a> {
+    /// Sets the changelog options.
+    #[must_use]
+    pub fn with_options(mut self, options: Options) -> Self {
+        self.options = options;
+        self
+    }
+
     /// Adds a revision to the changelog.
     ///
     /// Note that only relevant changes are included in the changelog, which
@@ -136,7 +148,7 @@ impl<'a> Extend<&'a Revision<'a>> for Changelog<'a> {
 
 // ----------------------------------------------------------------------------
 
-impl fmt::Display for Changelog<'_> {
+impl Display for Changelog<'_> {
     /// Formats the changelog for display.
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         if !self.sections.is_empty() {
@@ -146,7 +158,7 @@ impl fmt::Display for Changelog<'_> {
         // Write all sections
         for section in self.sections.values() {
             f.write_str("\n\n")?;
-            section.fmt(f)?;
+            section.fmt_with(f, &self.options)?;
         }
 
         // No errors occurred

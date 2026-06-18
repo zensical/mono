@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Zensical and contributors
+// Copyright (c) 2025-2026 Zensical and contributors
 
 // SPDX-License-Identifier: MIT
 // Third-party contributions licensed under DCO
@@ -51,7 +51,7 @@ impl Commit<'_> {
     ///
     /// # Errors
     ///
-    /// This method returns [`Error::Git`][] if the operation fails.
+    /// Returns [`Error::Git`][] if the operation fails.
     ///
     /// [`Error::Git`]: crate::repository::Error::Git
     pub fn deltas(&self) -> Result<Deltas<'_>> {

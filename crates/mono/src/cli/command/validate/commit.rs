@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Zensical and contributors
+// Copyright (c) 2025-2026 Zensical and contributors
 
 // SPDX-License-Identifier: MIT
 // Third-party contributions licensed under DCO
@@ -77,7 +77,10 @@ where
         // Validate a commit identifier
         if let Some(id) = &self.id {
             let commit = context.repository.find(id)?;
-            if parse_summary(commit.summary()).is_none() {
+            let valid = commit
+                .summary()?
+                .is_some_and(|summary| parse_summary(summary).is_some());
+            if !valid {
                 process::exit(1);
             }
 

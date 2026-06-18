@@ -23,41 +23,52 @@
 
 // ----------------------------------------------------------------------------
 
-//! Delta.
+//! Changelog options.
 
-use std::path::PathBuf;
+use std::str::FromStr;
+
+mod error;
+
+pub use error::{Error, Result};
 
 // ----------------------------------------------------------------------------
-// Enums
+// Structs
 // ----------------------------------------------------------------------------
 
-/// Delta.
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub enum Delta {
-    /// Path was created.
-    Create { path: PathBuf },
-    /// Path was modified.
-    Modify { path: PathBuf },
-    /// Path was renamed.
-    Rename { from: PathBuf, path: PathBuf },
-    /// Path was deleted.
-    Delete { path: PathBuf },
+/// Changelog options.
+#[derive(Debug, Default)]
+pub struct Options {
+    /// Commit URL prefix.
+    pub commit_url: Option<String>,
+    /// Reference URL prefix.
+    pub reference_url: Option<String>,
 }
 
 // ----------------------------------------------------------------------------
 // Trait implementations
 // ----------------------------------------------------------------------------
 
-#[allow(clippy::must_use_candidate)]
-impl Delta {
-    /// Returns a reference to the path of the delta.
-    #[inline]
-    pub fn path(&self) -> &PathBuf {
-        match self {
-            Delta::Create { path, .. } => path,
-            Delta::Modify { path, .. } => path,
-            Delta::Rename { path, .. } => path,
-            Delta::Delete { path, .. } => path,
-        }
+impl FromStr for Options {
+    type Err = Error;
+
+    /// Creates changelog options from a repository URL.
+    fn from_str(value: &str) -> Result<Self> {
+        let url = value.strip_prefix("git+").unwrap_or(value);
+        let url = url.trim_end_matches('/');
+        let url = url.strip_suffix(".git").unwrap_or(url);
+
+        // Extract owner/repository slug from GitHub URL
+        let slug = match url.strip_prefix("git@github.com:") {
+            Some(slug) => slug,
+            None => url
+                .strip_prefix("https://github.com/")
+                .ok_or(Error::Unsupported)?,
+        };
+
+        // Construct URLs for commit and reference links
+        Ok(Self {
+            commit_url: Some(format!("https://github.com/{slug}/commit/")),
+            reference_url: Some(format!("https://github.com/{slug}/issues/")),
+        })
     }
 }

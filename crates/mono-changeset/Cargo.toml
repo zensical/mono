@@ -1,4 +1,4 @@
-# Copyright (c) 2025 Zensical and contributors
+# Copyright (c) 2025-2026 Zensical and contributors
 
 # SPDX-License-Identifier: MIT
 # Third-party contributions licensed under DCO
@@ -23,7 +23,7 @@
 
 [package]
 name = "mono-changeset"
-version = "0.0.6"
+version = "0.0.5"
 description = "Mono repository changeset utilities"
 edition.workspace = true
 rust-version.workspace = true

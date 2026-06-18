@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Zensical and contributors
+// Copyright (c) 2025-2026 Zensical and contributors
 
 // SPDX-License-Identifier: MIT
 // Third-party contributions licensed under DCO
@@ -64,12 +64,12 @@ where
         // Resolve versions and create changeset, then determine all commits
         // that were added after the latest version was released
         let versions = context.repository.versions()?;
-        let mut changeset = Changeset::new(&context.workspace)?;
+        let mut changeset = Changeset::new(context.scopes)?;
         for res in versions.commits(None)? {
             changeset.add(res?)?;
         }
 
-        // Obtain version increments, which denote which packages have changed,
+        // Obtain version increments, which denote which scopes have changed,
         // and abort immediately if there are no changes that require a release
         let mut increments = changeset.increments().to_vec();
         if !versions.is_empty() && increments.iter().all(Option::is_none) {
@@ -104,21 +104,22 @@ where
             let project = suggestion.project();
             let increments = suggestion.increments();
 
-            // Retrieve namd and version of project - only packages are allowed
-            // to be dependents, which means name and version definitely exist
-            let name = project.name().expect("invariant");
+            // Retrieve the project version - only versioned projects are part
+            // of dependents, so we can be sure the version definitely exists
             let version = project.version().expect("invariant");
 
             // Create select builder, and add all possible version increments,
             // as depending on the changes, multiple increments are possible
-            let mut builder =
-                increments.iter().fold(select(name), |builder, &bump| {
+            let mut builder = increments.iter().fold(
+                select(suggestion.scope()),
+                |builder, &bump| {
                     if let Some(next) = bump {
                         builder.item(Some(next), version.bump(next), next)
                     } else {
                         builder.item(None, version, "current")
                     }
-                });
+                },
+            );
 
             // Prompt the user to select a version increment
             Ok(builder.interact()?)
@@ -127,15 +128,32 @@ where
         // Denote completion of prompt to the user
         outro(style("Versions selected").dim())?;
 
-        // Determine sink - @todo make sure there is only one?
-        let Some(sink) = dependents.sinks().next() else {
-            eprintln!("No canonical crate found");
+        // Determine canonical packages. All sinks must share the same current
+        // version and are bumped together to define the release version.
+        let sinks = dependents.sinks().collect::<Vec<_>>();
+        let Some(&sink) = sinks.first() else {
+            eprintln!("No canonical package found");
             return Ok(());
         };
 
-        // Extract version of sink
+        // Ensure all canonical packages have the same version
         let version = dependents[sink].version().expect("invariant");
-        let version = if let Some(b) = increments[sink] {
+        if sinks.iter().any(|&node| {
+            dependents[node].version().expect("invariant") != version
+        }) {
+            eprintln!("Canonical packages have different versions");
+            return Ok(());
+        }
+
+        // Bump all canonical packages to the highest increment, and bump the
+        // release version accordingly, bumping canonical packages together
+        let bump = sinks.iter().filter_map(|&node| increments[node]).max();
+        for &node in &sinks {
+            increments[node] = bump;
+        }
+
+        // Bump the release version to the highest increment, or keep it
+        let version = if let Some(b) = bump {
             version.bump(b)
         } else {
             version.clone()

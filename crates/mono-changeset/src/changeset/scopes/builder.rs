@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Zensical and contributors
+// Copyright (c) 2025-2026 Zensical and contributors
 
 // SPDX-License-Identifier: MIT
 // Third-party contributions licensed under DCO
@@ -48,33 +48,31 @@ pub struct Builder {
 // Implementations
 // ----------------------------------------------------------------------------
 
-impl Builder {
+impl Scopes {
     /// Creates a scope set builder.
-    ///
-    /// Note that the canonical way to create [`Scopes`] is to invoke the
-    /// [`Scopes::builder`] method, which creates an instance of [`Builder`].
     ///
     /// # Examples
     ///
     /// ```
-    /// use mono_changeset::scopes::Builder;
+    /// use mono_changeset::Scopes;
     ///
     /// // Create scope set builder
-    /// let mut builder = Builder::new();
+    /// let mut builder = Scopes::builder();
     /// ```
     #[must_use]
-    pub fn new() -> Self {
-        Self {
-            paths: Vec::new(),
-            globs: GlobSetBuilder::new(),
-        }
+    pub fn builder() -> Builder {
+        Builder::default()
     }
+}
 
+// ----------------------------------------------------------------------------
+
+impl Builder {
     /// Adds a scope to the scope set.
     ///
     /// # Errors
     ///
-    /// This method returns [`Error::Glob`] if the [`Glob`] can't be built.
+    /// Returns [`Error::Glob`] if the [`Glob`] can't be built.
     ///
     /// # Examples
     ///
@@ -117,7 +115,7 @@ impl Builder {
     ///
     /// # Errors
     ///
-    /// This method returns [`Error::Glob`] if the [`GlobSet`][] can't be built.
+    /// Returns [`Error::Glob`] if the [`GlobSet`][] can't be built.
     ///
     /// [`GlobSet`]: globset::GlobSet
     ///
@@ -162,6 +160,9 @@ impl Default for Builder {
     /// ```
     #[inline]
     fn default() -> Self {
-        Self::new()
+        Builder {
+            paths: Vec::new(),
+            globs: GlobSetBuilder::new(),
+        }
     }
 }

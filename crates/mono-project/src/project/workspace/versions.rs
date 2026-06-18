@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Zensical and contributors
+// Copyright (c) 2025-2026 Zensical and contributors
 
 // SPDX-License-Identifier: MIT
 // Third-party contributions licensed under DCO
@@ -28,12 +28,11 @@
 use semver::Version;
 use std::collections::BTreeMap;
 use std::fs;
-use std::marker::PhantomData;
 
 use crate::project::manifest::Manifest;
 use crate::project::version::{Increment, VersionExt};
-use crate::project::Result;
 
+use super::error::Result;
 use super::Workspace;
 
 // ----------------------------------------------------------------------------
@@ -43,16 +42,11 @@ use super::Workspace;
 /// Workspace version set.
 ///
 /// This data type is used to represent a set of package versions in a workspace
-/// and only used internally by the [`Workspace::bump`] method. Implementors of
-/// [`Manifest`] must also implement [`Writer`][] to support version updates,
-/// which must invoke a method on this type to retrieve the new versions.
-///
-/// [`Writer`]: crate::project::manifest::Writer
-pub struct Versions<'a, T> {
+/// and only used internally by the [`Workspace::bump`] method. Implementors can
+/// use this type to retrieve new versions when updating manifest contents.
+pub struct Versions<'a> {
     /// Package versions.
     items: BTreeMap<&'a str, Version>,
-    /// Type marker.
-    marker: PhantomData<T>,
 }
 
 // ----------------------------------------------------------------------------
@@ -70,41 +64,53 @@ where
     ///
     /// # Errors
     ///
-    /// This method returns [`Error:Io`][] if a manifest can't be written to
-    /// disk, or any error as encountered by the [`Writer`][] implementation.
+    /// Returns [`Error::Project`][] if a manifest can't be read, written,
+    /// updated, or synchronized.
     ///
-    /// [`Error:Io`]: crate::project::Error::Io
-    /// [`Writer`]: crate::project::manifest::Writer
+    /// [`Error::Project`]: crate::project::workspace::Error::Project
     #[allow(clippy::missing_panics_doc)]
     pub fn bump(self, increments: &[Option<Increment>]) -> Result {
         let mut items = BTreeMap::new();
 
-        // Compute new versions for all packages in workspace, and collect them
-        // into a version set that we then pass to each manifest writer
-        for (index, (name, path)) in self.packages.iter().enumerate() {
+        // Compute new package versions from scope-indexed increments, and
+        // collect them by manifest package name for manifest writers
+        for (index, (_, path)) in self.scopes.iter().enumerate() {
             if let Some(increment) = increments[index] {
                 let project = self.projects.get(path).expect("invariant");
+                let name = project.name().expect("invariant");
                 let version = project.version().expect("invariant");
-                items.insert(name.as_str(), version.bump(increment));
+                items.insert(name, version.bump(increment));
             }
         }
 
-        // The type marker is only necessary to discern between implementations
-        // of the trait for different manifest types
-        let versions = Versions { items, marker: PhantomData };
+        // Update all manifests in workspace with new versions
+        let versions = Versions { items };
         for project in &self {
             let content = fs::read_to_string(project.path())?;
-            fs::write(project.path(), T::update(content, &versions)?)?;
+            fs::write(
+                project.path(),
+                project.manifest.update(&content, &versions)?,
+            )?;
         }
 
         // Synchronize workspace manifest after update
-        T::sync(self.path)
+        if let Some(project) = self.projects.get(&self.path) {
+            project.manifest.sync(&self.path)?;
+        } else {
+            for project in self.projects.values() {
+                let path = project.path().parent().expect("invariant");
+                project.manifest.sync(path)?;
+            }
+        }
+
+        // No errors occurred
+        Ok(())
     }
 }
 
 // ----------------------------------------------------------------------------
 
-impl<T> Versions<'_, T> {
+impl Versions<'_> {
     /// Returns the version for the given package name.
     #[inline]
     #[must_use]

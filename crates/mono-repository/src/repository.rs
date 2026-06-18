@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Zensical and contributors
+// Copyright (c) 2025-2026 Zensical and contributors
 
 // SPDX-License-Identifier: MIT
 // Third-party contributions licensed under DCO
@@ -25,7 +25,7 @@
 
 //! Repository.
 
-use std::fmt;
+use std::fmt::{self, Debug};
 use std::path::Path;
 use std::process::Command;
 
@@ -56,7 +56,7 @@ impl Repository {
     ///
     /// # Errors
     ///
-    /// This method returns [`Error::Git`] if the operation fails.
+    /// Returns [`Error::Git`] if the operation fails.
     ///
     /// # Examples
     ///
@@ -83,7 +83,7 @@ impl Repository {
     ///
     /// # Errors
     ///
-    /// This method returns [`Error::Git`] if the operation fails.
+    /// Returns [`Error::Git`] if the operation fails.
     pub fn add<S>(&self, spec: S) -> Result
     where
         S: AsRef<str>,
@@ -105,7 +105,7 @@ impl Repository {
     ///
     /// # Errors
     ///
-    /// This method returns [`Error::Git`] if the operation fails.
+    /// Returns [`Error::Git`] if the operation fails.
     pub fn commit<M>(&self, message: M) -> Result
     where
         M: AsRef<str>,
@@ -136,7 +136,7 @@ impl Repository {
     ///
     /// # Errors
     ///
-    /// This method returns [`Error::Git`] if the operation fails.
+    /// Returns [`Error::Git`] if the operation fails.
     #[allow(clippy::missing_panics_doc)]
     pub fn branch<N>(&self, name: N) -> Result
     where
@@ -159,7 +159,7 @@ impl Repository {
     ///
     /// # Errors
     ///
-    /// This method returns [`Error::Git`] if the operation fails.
+    /// Returns [`Error::Git`] if the operation fails.
     ///
     /// # Examples
     ///
@@ -192,7 +192,11 @@ impl Repository {
     ///
     /// # Errors
     ///
-    /// This method returns [`Error::Git`] if the operation fails.
+    /// Returns [`Error::Git`] if the operation fails.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the current branch shorthand cannot be decoded as UTF-8.
     ///
     /// # Examples
     ///
@@ -211,9 +215,30 @@ impl Repository {
     /// ```
     pub fn on_default_branch(&self) -> Result<bool> {
         let opt = self.inner.head()?;
-        Ok(opt
-            .shorthand()
-            .is_some_and(|name| ["master", "main"].contains(&name)))
+        let name = opt.shorthand().expect("invariant");
+        Ok(["master", "main"].contains(&name))
+    }
+
+    /// Returns the origin remote URL.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error::Git`] if the operation fails.
+    ///
+    /// ```
+    /// # use std::error::Error;
+    /// # fn main() -> Result<(), Box<dyn Error>> {
+    /// use mono_repository::Repository;
+    ///
+    /// // Find and open repository from current directory
+    /// let repo = Repository::open(".")?;
+    /// println!("{}", repo.url()?);
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub fn url(&self) -> Result<String> {
+        let remote = self.inner.find_remote("origin")?;
+        Ok(remote.url()?.to_string())
     }
 }
 
@@ -231,7 +256,7 @@ impl Repository {
 // Trait implementations
 // ----------------------------------------------------------------------------
 
-impl fmt::Debug for Repository {
+impl Debug for Repository {
     /// Formats the repository for debugging.
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.debug_struct("Repository")

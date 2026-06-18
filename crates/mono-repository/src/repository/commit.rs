@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Zensical and contributors
+// Copyright (c) 2025-2026 Zensical and contributors
 
 // SPDX-License-Identifier: MIT
 // Third-party contributions licensed under DCO
@@ -25,7 +25,7 @@
 
 //! Commit.
 
-use std::fmt;
+use std::fmt::{self, Debug, Display};
 
 use super::error::Result;
 use super::id::Id;
@@ -60,7 +60,7 @@ impl Repository {
     ///
     /// # Errors
     ///
-    /// This method returns [`Error::Git`][] if the operation fails.
+    /// Returns [`Error::Git`][] if the operation fails.
     ///
     /// [`Error::Git`]: crate::repository::Error::Git
     pub fn get<I>(&self, id: I) -> Result<Commit<'_>>
@@ -80,7 +80,7 @@ impl Repository {
     ///
     /// # Errors
     ///
-    /// This method returns [`Error::Git`][] if the operation fails.
+    /// Returns [`Error::Git`][] if the operation fails.
     ///
     /// [`Error::Git`]: crate::repository::Error::Git
     pub fn find<S>(&self, spec: S) -> Result<Commit<'_>>
@@ -106,16 +106,28 @@ impl Commit<'_> {
     }
 
     /// Returns the commit summary.
-    #[allow(clippy::missing_panics_doc)]
-    #[inline]
-    pub fn summary(&self) -> &str {
-        self.inner.summary().expect("invariant")
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error::Git`] if the operation fails.
+    ///
+    /// [`Error::Git`]: crate::repository::Error::Git
+    pub fn summary(&self) -> Result<Option<&str>> {
+        self.inner.summary().map_err(Into::into)
     }
 
     /// Returns the commit body.
-    #[inline]
-    pub fn body(&self) -> Option<&str> {
-        self.inner.body().filter(|body| !body.is_empty())
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error::Git`] if the operation fails.
+    ///
+    /// [`Error::Git`]: crate::repository::Error::Git
+    pub fn body(&self) -> Result<Option<&str>> {
+        self.inner
+            .body()
+            .map(|body| body.filter(|body| !body.is_empty()))
+            .map_err(Into::into)
     }
 }
 
@@ -135,14 +147,14 @@ impl Eq for Commit<'_> {}
 
 // ----------------------------------------------------------------------------
 
-impl fmt::Display for Commit<'_> {
+impl Display for Commit<'_> {
     /// Formats the commit for display.
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        self.id().fmt(f)
+        Display::fmt(&self.id(), f)
     }
 }
 
-impl fmt::Debug for Commit<'_> {
+impl Debug for Commit<'_> {
     /// Formats the commit for debugging.
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.debug_struct("Commit")
@@ -164,7 +176,7 @@ impl fmt::Debug for Commit<'_> {
 ///
 /// # Errors
 ///
-/// This method returns [`Error::Git`][] if the operation fails.
+/// Returns [`Error::Git`][] if the operation fails.
 ///
 /// [`Error::Git`]: crate::repository::Error::Git
 pub fn trim_trailers(message: &str) -> Result<&str> {

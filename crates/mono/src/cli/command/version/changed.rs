@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Zensical and contributors
+// Copyright (c) 2025-2026 Zensical and contributors
 
 // SPDX-License-Identifier: MIT
 // Third-party contributions licensed under DCO
@@ -23,7 +23,7 @@
 
 // ----------------------------------------------------------------------------
 
-//! List the names of changed packages in topological order.
+//! List the names of changed scopes in topological order.
 
 use clap::Args;
 use semver::Version;
@@ -40,7 +40,7 @@ use crate::Context;
 // Structs
 // ----------------------------------------------------------------------------
 
-/// List the names of changed packages in topological order.
+/// List the names of changed scopes in topological order.
 #[derive(Args, Debug)]
 pub struct Arguments {
     /// Version in x.y.z format
@@ -61,13 +61,13 @@ where
         // Resolve versions and create changeset, then determine all commits
         // that are either part of the given version or yet unreleased
         let versions = context.repository.versions()?;
-        let mut changeset = Changeset::new(&context.workspace)?;
+        let mut changeset = Changeset::new(context.scopes)?;
         for res in versions.commits(self.version.as_ref())? {
             changeset.add(res?)?;
         }
 
-        // Obtain version increments, which denote which packages have changed,
-        // and if a version is given, ensure that all packages that were bumped
+        // Obtain version increments, which denote which scopes have changed,
+        // and if a version is given, ensure that all scopes that were bumped
         // in the given version are marked as changed, since there might be
         // transitive changes that only affect dependencies
         let mut increments = changeset.increments().to_vec();
@@ -87,15 +87,14 @@ where
             }
         }
 
-        // Traverse dependents in topological order, and write names of changed
-        // packages to standard output if they have a version increment
+        // Traverse dependents in topological order, and write changed scopes
+        // to standard output if they have a version increment.
         let dependents = context.workspace.dependents()?;
         for node in &dependents {
-            // In case no versions have been created so far, all packages must
+            // In case no versions have been created so far, all scopes must
             // be considered changed to be included in the initial release
             if increments[node].is_some() || versions.is_empty() {
-                let name = dependents[node].name().expect("invariant");
-                println!("{name}");
+                println!("{}", dependents.scope(node));
             }
         }
 

@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Zensical and contributors
+// Copyright (c) 2025-2026 Zensical and contributors
 
 // SPDX-License-Identifier: MIT
 // Third-party contributions licensed under DCO
@@ -23,7 +23,7 @@
 
 // ----------------------------------------------------------------------------
 
-//! List the names of all packages in topological order.
+//! List the names of all scopes in topological order.
 
 use clap::Args;
 
@@ -36,7 +36,7 @@ use crate::Context;
 // Structs
 // ----------------------------------------------------------------------------
 
-/// List the names of all packages in topological order.
+/// List the names of all scopes in topological order.
 #[derive(Args, Debug)]
 pub struct Arguments {}
 
@@ -52,8 +52,7 @@ where
     fn execute(&self, context: Context<T>) -> Result {
         let dependents = context.workspace.dependents()?;
         for node in &dependents {
-            let name = dependents[node].name().expect("invariant");
-            println!("{name}");
+            println!("{}", dependents.scope(node));
         }
 
         // No errors occurred

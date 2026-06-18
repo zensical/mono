@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Zensical and contributors
+// Copyright (c) 2025-2026 Zensical and contributors
 
 // SPDX-License-Identifier: MIT
 // Third-party contributions licensed under DCO
@@ -53,7 +53,7 @@ pub trait VersionExt {
     ///
     /// # Errors
     ///
-    /// This method returns [`Error`] if parsing fails.
+    /// Returns a semantic version [`Error`] if parsing fails.
     fn from_str_with_prefix(value: &str) -> Result<Version, Error> {
         value.trim_start_matches('v').parse()
     }

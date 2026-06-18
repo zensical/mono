@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Zensical and contributors
+// Copyright (c) 2025-2026 Zensical and contributors
 
 // SPDX-License-Identifier: MIT
 // Third-party contributions licensed under DCO
@@ -25,7 +25,7 @@
 
 //! Section category.
 
-use std::fmt;
+use std::fmt::{self, Display};
 
 use crate::changeset::change::Kind;
 use crate::changeset::Change;
@@ -81,7 +81,7 @@ impl From<&Change> for Option<Category> {
 
 // ----------------------------------------------------------------------------
 
-impl fmt::Display for Category {
+impl Display for Category {
     /// Formats the section category for display.
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {

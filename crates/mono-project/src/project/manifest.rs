@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Zensical and contributors
+// Copyright (c) 2025-2026 Zensical and contributors
 
 // SPDX-License-Identifier: MIT
 // Third-party contributions licensed under DCO
@@ -28,7 +28,7 @@
 use semver::Version;
 use std::borrow::Cow;
 use std::fmt::Debug;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use std::str::FromStr;
 
 use super::error::{Error, Result};
@@ -46,7 +46,7 @@ pub mod node;
 /// Manifests can be packages or workspaces – sometimes one or the other, and
 /// sometimes both at the same time, depending on the ecosystem. This is also
 /// why several methods of this trait return optional references – ecosystems
-/// differ in how they implement these concepts (e.g. Rust and Node).
+/// differ in how they implement these concepts (e.g. Cargo and Node).
 ///
 /// Note that manifests only return the names of their dependencies, not their
 /// version requirements, since we only require inner-workspace dependencies,
@@ -55,7 +55,7 @@ pub mod node;
 ///
 /// Think of this trait as being an adapter into an ecosystem-specific manifest
 /// format, providing just enough information for version management.
-pub trait Manifest: Debug + Resolver + Writer {
+pub trait Manifest: Debug {
     /// Returns a reference to the name.
     fn name(&self) -> Option<&str>;
 
@@ -66,45 +66,71 @@ pub trait Manifest: Debug + Resolver + Writer {
     fn members(&self) -> Cow<'_, [String]>;
 
     /// Creates an iterator over the dependencies.
-    fn dependencies(&self) -> impl Iterator<Item = &str>;
-}
+    fn dependencies(&self) -> Box<dyn Iterator<Item = &str> + '_>;
 
-// ----------------------------------------------------------------------------
-
-/// Manifest path resolver.
-///
-/// Some ecosystems allow for multiple names of manifests. This trait keeps
-/// resolution flexible, so paths can be validated before resolution.
-pub trait Resolver: FromStr<Err = Error> {
-    /// Resolves the manifest path from the given path.
-    ///
-    /// # Errors
-    ///
-    /// This method must return an error if the path cannot be resolved, or if
-    /// the file doesn't exist. Mechanics are up to the implementor.
-    fn resolve<P>(path: P) -> Result<PathBuf>
-    where
-        P: AsRef<Path>;
-}
-
-/// Manifest writer.
-pub trait Writer: Sized {
     /// Updates the given manifest's content with new package versions.
     ///
     /// # Errors
     ///
     /// This method must return an error if the content cannot be transformed,
     /// e.g. when it can't be successfully parsed, verified, or serialized.
-    fn update<S>(content: S, versions: &Versions<Self>) -> Result<String>
-    where
-        S: AsRef<str>;
+    fn update(&self, content: &str, versions: &Versions<'_>) -> Result<String>;
 
     /// Synchronizes the manifest after update.
     ///
     /// # Errors
     ///
     /// This method must return an error if synchronization fails.
-    fn sync<P>(path: P) -> Result
-    where
-        P: AsRef<Path>;
+    fn sync(&self, path: &Path) -> Result;
+}
+
+/// Manifest file.
+pub trait ManifestFile: Manifest + FromStr<Err = Error> {
+    /// Manifest file name.
+    const FILE: &'static str;
+}
+
+// ----------------------------------------------------------------------------
+// Trait implementations
+// ----------------------------------------------------------------------------
+
+impl<T> Manifest for Box<T>
+where
+    T: Manifest + ?Sized,
+{
+    /// Returns a reference to the name.
+    #[inline]
+    fn name(&self) -> Option<&str> {
+        (**self).name()
+    }
+
+    /// Returns a reference to the version.
+    #[inline]
+    fn version(&self) -> Option<&Version> {
+        (**self).version()
+    }
+
+    /// Returns a reference to the members.
+    #[inline]
+    fn members(&self) -> Cow<'_, [String]> {
+        (**self).members()
+    }
+
+    /// Creates an iterator over the dependencies.
+    #[inline]
+    fn dependencies(&self) -> Box<dyn Iterator<Item = &str> + '_> {
+        (**self).dependencies()
+    }
+
+    /// Updates the given manifest's content with new package versions.
+    #[inline]
+    fn update(&self, content: &str, versions: &Versions<'_>) -> Result<String> {
+        (**self).update(content, versions)
+    }
+
+    /// Synchronizes the manifest after update.
+    #[inline]
+    fn sync(&self, path: &Path) -> Result {
+        (**self).sync(path)
+    }
 }

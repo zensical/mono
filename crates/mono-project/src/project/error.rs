@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Zensical and contributors
+// Copyright (c) 2025-2026 Zensical and contributors
 
 // SPDX-License-Identifier: MIT
 // Third-party contributions licensed under DCO
@@ -23,7 +23,7 @@
 
 // ----------------------------------------------------------------------------
 
-//! Manifest error.
+//! Project error.
 
 use std::{io, process, result};
 use thiserror::Error;
@@ -32,7 +32,7 @@ use thiserror::Error;
 // Enums
 // ----------------------------------------------------------------------------
 
-/// Manifest error.
+/// Project error.
 #[derive(Debug, Error)]
 pub enum Error {
     /// I/O error.
@@ -44,9 +44,6 @@ pub enum Error {
     /// Pattern error.
     #[error(transparent)]
     Pattern(#[from] glob::PatternError),
-    /// Graph error.
-    #[error(transparent)]
-    Graph(#[from] zrx::graph::Error),
     /// TOML error.
     #[error(transparent)]
     Toml(#[from] toml::de::Error),
@@ -59,11 +56,17 @@ pub enum Error {
     /// Process exited with status.
     #[error("process exited with status {0}")]
     Status(process::ExitStatus),
+    /// Project manifest not found.
+    #[error("project manifest not found")]
+    NotFound,
+    /// Project manifest ambiguous.
+    #[error("project manifest ambiguous")]
+    Ambiguous,
 }
 
 // ----------------------------------------------------------------------------
 // Type aliases
 // ----------------------------------------------------------------------------
 
-/// Manifest result.
+/// Project result.
 pub type Result<T = ()> = result::Result<T, Error>;

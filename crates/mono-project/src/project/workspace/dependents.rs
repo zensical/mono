@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Zensical and contributors
+// Copyright (c) 2025-2026 Zensical and contributors
 
 // SPDX-License-Identifier: MIT
 // Third-party contributions licensed under DCO
@@ -26,13 +26,14 @@
 //! Workspace dependents.
 
 use std::ops::Index;
+use zrx::graph::iter::{Sinks, Sources};
 use zrx::graph::traversal::IntoIter;
 use zrx::graph::Graph;
 
 use crate::project::manifest::Manifest;
-use crate::project::{Project, Result};
+use crate::project::Project;
 
-use super::Workspace;
+use super::{Result, Workspace};
 
 mod suggestion;
 
@@ -48,6 +49,8 @@ where
 {
     /// Workspace graph.
     graph: Graph<&'a Project<T>>,
+    /// Workspace scopes.
+    scopes: Vec<&'a str>,
 }
 
 // ----------------------------------------------------------------------------
@@ -62,28 +65,30 @@ where
     ///
     /// This method creates a graph that links all projects in a workspace with
     /// their inner-workspace dependencies, allowing to perform a topological
-    /// traversal, as handling packages in the right order is essential for
+    /// traversal, as handling projects in dependency order is essential for
     /// correct versioning and release management.
     ///
     /// # Errors
     ///
-    /// This method returns [`Error::Graph`][] if the graph could not be
-    /// constructed, which should practically never happen.
+    /// Returns [`Error::Graph`][] if the graph could not be constructed, which
+    /// should theoretically and practically never happen.
     ///
-    /// [`Error::Graph`]: crate::project::Error::Graph
+    /// [`Error::Graph`]: crate::project::workspace::Error::Graph
     pub fn dependents(&self) -> Result<Dependents<'_, T>> {
         let mut builder = Graph::builder();
 
-        // Collect all packages in the workspace, which are all projects that
-        // have a dedicated name and version, and add them as nodes
-        for project in self.projects.values() {
-            if project.manifest.name().is_some() {
+        // Add the projects to the graph in the same order as scope-indexed
+        // increments, keeping scope labels aligned with graph node indices
+        let mut scopes = Vec::new();
+        for (scope, path) in &self.scopes {
+            if let Some(project) = self.projects.get(path) {
                 builder.add_node(project);
+                scopes.push(scope.as_str());
             }
         }
 
-        // Analyze dependencies between packages by iterating over all projects,
-        // and adding edges to each dependency that is part of the workspace
+        // Analyze the dependencies between projects by resolving manifest
+        // dependency names to projects that are part of the workspace
         let mut edges = Vec::new();
         for (n, project) in builder.nodes().iter().enumerate() {
             for name in project.manifest.dependencies() {
@@ -91,8 +96,7 @@ where
                     continue;
                 };
 
-                // Here, we're sure that this is a workspace project, so we look
-                // for the index of the dependency and link it to the project
+                // Link the dependency to the current project by node index.
                 let mut iter = builder.nodes().iter();
                 if let Some(m) = iter.position(|&next| next == dependency) {
                     edges.push((n, m));
@@ -105,11 +109,11 @@ where
         // they point from dependencies to dependents, allowing for topological
         // traversal that visits dependencies first.
         for (n, m) in edges {
-            builder.add_edge(m, n, ())?;
+            builder.add_edge(m, n)?;
         }
 
         // Create and return dependents
-        Ok(Dependents { graph: builder.build() })
+        Ok(Dependents { graph: builder.build(), scopes })
     }
 }
 
@@ -128,14 +132,20 @@ where
 
     /// Creates an iterator over the projects with no dependencies.
     #[inline]
-    pub fn sources(&self) -> impl Iterator<Item = usize> {
+    pub fn sources(&self) -> Sources<'_> {
         self.graph.sources()
     }
 
     /// Creates an iterator over the projects with no dependents.
     #[inline]
-    pub fn sinks(&self) -> impl Iterator<Item = usize> {
+    pub fn sinks(&self) -> Sinks<'_> {
         self.graph.sinks()
+    }
+
+    /// Returns the scope of the project at the given index.
+    #[inline]
+    pub fn scope(&self, index: usize) -> &str {
+        self.scopes[index]
     }
 }
 
@@ -167,6 +177,8 @@ where
 
     /// Creates an iterator over the projects.
     fn into_iter(self) -> Self::IntoIter {
-        self.graph.traverse(self.graph.sources()).into_iter()
+        self.graph
+            .traverse(self.graph.sources().collect::<Vec<_>>())
+            .into_iter()
     }
 }

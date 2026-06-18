@@ -31,9 +31,11 @@ use std::ops::Index;
 use std::path::{Path, PathBuf};
 
 mod builder;
+mod convert;
 mod error;
 
 pub use builder::Builder;
+pub use convert::TryIntoScopes;
 pub use error::{Error, Result};
 
 // ----------------------------------------------------------------------------
@@ -58,21 +60,6 @@ pub struct Scopes {
 // ----------------------------------------------------------------------------
 
 impl Scopes {
-    /// Creates a scope set builder.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use mono_changeset::Scopes;
-    ///
-    /// // Create scope set builder
-    /// let mut builder = Scopes::builder();
-    #[inline]
-    #[must_use]
-    pub fn builder() -> Builder {
-        Builder::new()
-    }
-
     /// Returns the longest matching scope for the given path.
     ///
     /// # Examples

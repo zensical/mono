@@ -26,8 +26,8 @@
 //! Configuration.
 
 use serde::Deserialize;
-
-use mono_changeset as changeset;
+use std::collections::BTreeMap;
+use std::path::PathBuf;
 
 // ----------------------------------------------------------------------------
 // Structs
@@ -36,7 +36,10 @@ use mono_changeset as changeset;
 /// Configuration.
 #[derive(Debug, Default, Deserialize)]
 pub struct Config {
-    /// Changeset.
+    /// Projects.
     #[serde(default)]
-    pub changeset: changeset::Config,
+    pub projects: BTreeMap<String, PathBuf>,
+    /// Additional scopes.
+    #[serde(default)]
+    pub scopes: BTreeMap<String, PathBuf>,
 }

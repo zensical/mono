@@ -48,28 +48,26 @@ pub struct Builder {
 // Implementations
 // ----------------------------------------------------------------------------
 
-impl Builder {
+impl Scopes {
     /// Creates a scope set builder.
-    ///
-    /// Note that the canonical way to create [`Scopes`] is to invoke the
-    /// [`Scopes::builder`] method, which creates an instance of [`Builder`].
     ///
     /// # Examples
     ///
     /// ```
-    /// use mono_changeset::scopes::Builder;
+    /// use mono_changeset::Scopes;
     ///
     /// // Create scope set builder
-    /// let mut builder = Builder::new();
+    /// let mut builder = Scopes::builder();
     /// ```
     #[must_use]
-    pub fn new() -> Self {
-        Self {
-            paths: Vec::new(),
-            globs: GlobSetBuilder::new(),
-        }
+    pub fn builder() -> Builder {
+        Builder::default()
     }
+}
 
+// ----------------------------------------------------------------------------
+
+impl Builder {
     /// Adds a scope to the scope set.
     ///
     /// # Errors
@@ -162,6 +160,9 @@ impl Default for Builder {
     /// ```
     #[inline]
     fn default() -> Self {
-        Self::new()
+        Builder {
+            paths: Vec::new(),
+            globs: GlobSetBuilder::new(),
+        }
     }
 }

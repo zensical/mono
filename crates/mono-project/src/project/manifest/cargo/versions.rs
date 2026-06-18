@@ -31,102 +31,99 @@ use toml_edit::{value, DocumentMut, Item};
 use crate::project::workspace::Versions;
 use crate::project::Result;
 
-use super::Cargo;
-
 // ----------------------------------------------------------------------------
-// Implementations
+// Functions
 // ----------------------------------------------------------------------------
 
-impl Versions<'_, Cargo> {
-    /// Updates package versions in the given manifest content.
-    ///
-    /// # Errors
-    ///
-    /// This method returns [`Error::TomlEdit`][] if parsing or printing fails.
-    ///
-    /// [`Error::TomlEdit`]: crate::project::Error::TomlEdit
-    pub fn update<S>(&self, content: S) -> Result<String>
-    where
-        S: AsRef<str>,
+/// Updates package versions in the given manifest content.
+///
+/// # Errors
+///
+/// This method returns [`Error::TomlEdit`][] if parsing or printing fails.
+///
+/// [`Error::TomlEdit`]: crate::project::Error::TomlEdit
+pub fn update<S>(content: S, versions: &Versions<'_>) -> Result<String>
+where
+    S: AsRef<str>,
+{
+    let content = content.as_ref();
+    let mut doc = content.parse::<DocumentMut>()?;
+
+    // Apply updates to the document
+    update_package_version(&mut doc, versions);
+    update_workspace_dependencies(&mut doc, versions);
+    update_dependencies(&mut doc, versions);
+
+    // Return updated document
+    Ok(doc.to_string())
+}
+
+// ----------------------------------------------------------------------------
+
+/// Updates `[package].version` with a new version.
+fn update_package_version(doc: &mut DocumentMut, versions: &Versions<'_>) {
+    if let Some(package) = doc
+        .get_mut("package")
+        .and_then(|item| item.as_table_like_mut())
     {
-        let content = content.as_ref();
-        let mut doc = content.parse::<DocumentMut>()?;
-
-        // Apply updates to the document
-        self.update_package_version(&mut doc);
-        self.update_workspace_dependencies(&mut doc);
-        self.update_dependencies(&mut doc);
-
-        // Return updated document
-        Ok(doc.to_string())
-    }
-
-    /// Updates `[package].version` with a new version.
-    fn update_package_version(&self, doc: &mut DocumentMut) {
-        if let Some(package) = doc
-            .get_mut("package")
-            .and_then(|item| item.as_table_like_mut())
-        {
-            if let Some(name) =
-                package.get("name").and_then(|item| item.as_str())
-            {
-                if let Some(version) = self.get(name) {
-                    package.insert("version", value(version.to_string()));
-                }
+        if let Some(name) = package.get("name").and_then(|item| item.as_str()) {
+            if let Some(version) = versions.get(name) {
+                package.insert("version", value(version.to_string()));
             }
         }
     }
+}
 
-    /// Updates `[workspace.dependencies]` with new versions.
-    fn update_workspace_dependencies(&self, doc: &mut DocumentMut) {
+/// Updates `[workspace.dependencies]` with new versions.
+fn update_workspace_dependencies(
+    doc: &mut DocumentMut, versions: &Versions<'_>,
+) {
+    if let Some(table) = doc
+        .get_mut("workspace")
+        .and_then(|item| item.get_mut("dependencies"))
+        .and_then(|item| item.as_table_like_mut())
+    {
+        for (name, item) in table.iter_mut() {
+            if let Some(version) = versions.get(name.get()) {
+                update_dependency(item, version);
+            }
+        }
+    }
+}
+
+/// Updates `[dependencies]` and `[dev-dependencies]` with new versions.
+fn update_dependencies(doc: &mut DocumentMut, versions: &Versions<'_>) {
+    for section in ["dependencies", "dev-dependencies"] {
         if let Some(table) = doc
-            .get_mut("workspace")
-            .and_then(|item| item.get_mut("dependencies"))
+            .get_mut(section)
             .and_then(|item| item.as_table_like_mut())
         {
             for (name, item) in table.iter_mut() {
-                if let Some(version) = self.get(name.get()) {
-                    self.update_dependency(item, version);
+                if let Some(version) = versions.get(name.get()) {
+                    update_dependency(item, version);
                 }
             }
         }
     }
+}
 
-    /// Updates `[dependencies]` and `[dev-dependencies]` with new versions.
-    fn update_dependencies(&self, doc: &mut DocumentMut) {
-        for section in ["dependencies", "dev-dependencies"] {
-            if let Some(table) = doc
-                .get_mut(section)
-                .and_then(|item| item.as_table_like_mut())
-            {
-                for (name, item) in table.iter_mut() {
-                    if let Some(version) = self.get(name.get()) {
-                        self.update_dependency(item, version);
-                    }
-                }
+/// Updates a dependency with a new version.
+fn update_dependency(item: &mut Item, version: &Version) {
+    if let Some(table) = item.as_table_like() {
+        if let Some(workspace) = table.get("workspace") {
+            // Skip if dependency inherits from workspace
+            if workspace.as_bool() == Some(true) {
+                return;
             }
         }
     }
 
-    /// Updates a dependency with a new version.
-    #[allow(clippy::unused_self)]
-    fn update_dependency(&self, item: &mut Item, version: &Version) {
-        if let Some(table) = item.as_table_like() {
-            if let Some(workspace) = table.get("workspace") {
-                // Skip if dependency inherits from workspace
-                if workspace.as_bool() == Some(true) {
-                    return;
-                }
-            }
-        }
+    // Update simple version string: `foo = "1.0.0"`
+    if item.is_str() {
+        *item = value(version.to_string());
 
-        // Update simple version string: `foo = "1.0.0"`
-        if item.is_str() {
-            *item = value(version.to_string());
-
-        // Update inline table: `foo = { version = "1.0.0" }`
-        } else if let Some(table) = item.as_table_like_mut() {
-            table.insert("version", value(version.to_string()));
-        }
+    // Update inline table: `foo = { version = "1.0.0" }`
+    } else if let Some(table) = item.as_table_like_mut() {
+        table.insert("version", value(version.to_string()));
     }
 }

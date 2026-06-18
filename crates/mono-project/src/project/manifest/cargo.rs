@@ -29,11 +29,11 @@ use semver::Version;
 use serde::Deserialize;
 use std::borrow::Cow;
 use std::collections::BTreeMap;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use std::process::{Command, Stdio};
 use std::str::FromStr;
 
-use crate::project::manifest::{Manifest, Resolver, Writer};
+use crate::project::manifest::{Manifest, ManifestFile};
 use crate::project::workspace::Versions;
 use crate::project::{Error, Result};
 
@@ -107,38 +107,20 @@ impl Manifest for Cargo {
 
     /// Creates an iterator over the dependencies.
     #[inline]
-    fn dependencies(&self) -> impl Iterator<Item = &str> {
+    fn dependencies(&self) -> Box<dyn Iterator<Item = &str> + '_> {
         let dependencies = match self {
             Cargo::Package { dependencies, .. } => dependencies,
             Cargo::Workspace { workspace } => &workspace.dependencies,
         };
 
         // Return iterator over dependency names
-        dependencies.keys().map(String::as_str)
+        Box::new(dependencies.keys().map(String::as_str))
     }
-}
 
-// ----------------------------------------------------------------------------
-
-impl Resolver for Cargo {
-    /// Resolves the manifest path from the given path.
-    #[inline]
-    fn resolve<P>(path: P) -> Result<PathBuf>
-    where
-        P: AsRef<Path>,
-    {
-        Ok(path.as_ref().join("Cargo.toml"))
-    }
-}
-
-impl Writer for Cargo {
     /// Updates the given manifest's content with new package versions.
     #[inline]
-    fn update<S>(content: S, versions: &Versions<Self>) -> Result<String>
-    where
-        S: AsRef<str>,
-    {
-        versions.update(content)
+    fn update(&self, content: &str, versions: &Versions<'_>) -> Result<String> {
+        versions::update(content, versions)
     }
 
     /// Synchronizes the manifest after update.
@@ -147,10 +129,7 @@ impl Writer for Cargo {
     /// synchronize `Cargo.lock` with the updated versions. This is necessary
     /// to ensure that the lock file reflects the changes made to the manifest,
     /// or there will be inconsistencies between the manifest and the lock file.
-    fn sync<P>(path: P) -> Result
-    where
-        P: AsRef<Path>,
-    {
+    fn sync(&self, path: &Path) -> Result {
         // Explicitly update `Cargo.lock` for synchronization
         let status = Command::new("cargo")
             .args(["update", "--workspace", "--offline"])
@@ -161,6 +140,11 @@ impl Writer for Cargo {
         // Return error with status code if unsuccessful
         status.success().then_some(()).ok_or(Error::Status(status))
     }
+}
+
+impl ManifestFile for Cargo {
+    /// Manifest file name.
+    const FILE: &'static str = "Cargo.toml";
 }
 
 // ----------------------------------------------------------------------------

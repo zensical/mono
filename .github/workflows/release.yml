@@ -1,4 +1,4 @@
-# Copyright (c) 2025 Zensical and contributors
+# Copyright (c) 2025-2026 Zensical and contributors
 
 # SPDX-License-Identifier: MIT
 # Third-party contributions licensed under DCO
@@ -31,9 +31,9 @@ on:
       - master
 
 permissions:
-  contents: write     # Required for tags and releases
+  contents: write # Required for tags and releases
   attestations: write # Required for attestations
-  id-token: write     # Required for OIDC
+  id-token: write # Required for OIDC
 
 jobs:
   build:

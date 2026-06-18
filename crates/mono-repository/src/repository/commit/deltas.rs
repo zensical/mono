@@ -51,7 +51,7 @@ impl Commit<'_> {
     ///
     /// # Errors
     ///
-    /// This method returns [`Error::Git`][] if the operation fails.
+    /// Returns [`Error::Git`][] if the operation fails.
     ///
     /// [`Error::Git`]: crate::repository::Error::Git
     pub fn deltas(&self) -> Result<Deltas<'_>> {

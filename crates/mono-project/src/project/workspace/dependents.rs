@@ -70,8 +70,8 @@ where
     ///
     /// # Errors
     ///
-    /// This method returns [`Error::Graph`][] if the graph could not be
-    /// constructed, which should practically never happen.
+    /// Returns [`Error::Graph`][] if the graph could not be constructed, which
+    /// should theoretically and practically never happen.
     ///
     /// [`Error::Graph`]: crate::project::workspace::Error::Graph
     pub fn dependents(&self) -> Result<Dependents<'_, T>> {

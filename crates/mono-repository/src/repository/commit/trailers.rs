@@ -53,7 +53,7 @@ impl Commit<'_> {
     ///
     /// # Errors
     ///
-    /// This method returns [`Error::Git`] if the operation fails.
+    /// Returns [`Error::Git`] if the operation fails.
     #[allow(clippy::missing_panics_doc)]
     #[inline]
     pub fn trailers(&self) -> Result<Trailers> {
@@ -118,7 +118,7 @@ impl FromStr for Trailers {
     ///
     /// # Errors
     ///
-    /// This method returns [`Error::Git`] if the operation fails.
+    /// Returns [`Error::Git`] if the operation fails.
     fn from_str(value: &str) -> Result<Self> {
         // We must add two line feeds to the message or the trailers wouldn't be
         // discoverable, as git assumes that we pass the entire commit message

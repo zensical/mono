@@ -87,8 +87,7 @@ impl FromStr for Kind {
     ///
     /// # Errors
     ///
-    /// This methods return [`Error::Kind`], if the string does not correspond
-    /// to a valid [`Kind`] variant.
+    /// Returns [`Error::Kind`] if the string isn't a valid [`Kind`] variant.
     ///
     /// # Examples
     ///

@@ -60,7 +60,7 @@ impl Repository {
     ///
     /// # Errors
     ///
-    /// This method returns [`Error::Git`][] if the operation fails.
+    /// Returns [`Error::Git`][] if the operation fails.
     ///
     /// [`Error::Git`]: crate::repository::Error::Git
     pub fn get<I>(&self, id: I) -> Result<Commit<'_>>
@@ -80,7 +80,7 @@ impl Repository {
     ///
     /// # Errors
     ///
-    /// This method returns [`Error::Git`][] if the operation fails.
+    /// Returns [`Error::Git`][] if the operation fails.
     ///
     /// [`Error::Git`]: crate::repository::Error::Git
     pub fn find<S>(&self, spec: S) -> Result<Commit<'_>>
@@ -109,7 +109,7 @@ impl Commit<'_> {
     ///
     /// # Errors
     ///
-    /// This method returns [`Error::Git`] if the operation fails.
+    /// Returns [`Error::Git`] if the operation fails.
     ///
     /// [`Error::Git`]: crate::repository::Error::Git
     pub fn summary(&self) -> Result<Option<&str>> {
@@ -120,7 +120,7 @@ impl Commit<'_> {
     ///
     /// # Errors
     ///
-    /// This method returns [`Error::Git`] if the operation fails.
+    /// Returns [`Error::Git`] if the operation fails.
     ///
     /// [`Error::Git`]: crate::repository::Error::Git
     pub fn body(&self) -> Result<Option<&str>> {
@@ -176,7 +176,7 @@ impl Debug for Commit<'_> {
 ///
 /// # Errors
 ///
-/// This method returns [`Error::Git`][] if the operation fails.
+/// Returns [`Error::Git`][] if the operation fails.
 ///
 /// [`Error::Git`]: crate::repository::Error::Git
 pub fn trim_trailers(message: &str) -> Result<&str> {

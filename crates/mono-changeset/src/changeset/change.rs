@@ -133,9 +133,9 @@ impl FromStr for Change {
     ///
     /// # Errors
     ///
-    /// This methods return [`Error::Format`][], if the string does not adhere
-    /// to conventional commits format (without scopes), and [`Error::Kind`][],
-    /// if the string does not correspond to a valid [`Kind`] variant.
+    /// Returns [`Error::Format`] if the string doesn't match conventional
+    /// commits format (without scopes), and [`Error::Kind`] if the string
+    /// isn't a valid [`Kind`] variant.
     ///
     /// # Examples
     ///

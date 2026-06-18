@@ -79,7 +79,7 @@ where
     ///
     /// # Errors
     ///
-    /// This method returns [`Error::Io`][], if the workspace could not be read.
+    /// Returns [`Error::Io`][], if the workspace could not be read.
     #[allow(clippy::missing_panics_doc)]
     pub fn read<P>(path: P) -> Result<Self>
     where
@@ -110,7 +110,7 @@ where
     ///
     /// # Errors
     ///
-    /// This method returns [`Error::Io`][], if the workspace could not be read.
+    /// Returns [`Error::Io`][], if the workspace could not be read.
     ///
     /// [`Error::Io`]: crate::project::Error::Io
     #[inline]

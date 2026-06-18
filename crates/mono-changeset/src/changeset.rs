@@ -68,8 +68,7 @@ impl Changeset<'_> {
     ///
     /// # Errors
     ///
-    /// This method returns [`Error::Scopes`] if the scope set can't be built
-    /// from the given value.
+    /// Returns [`Error::Scopes`] if the scope set can't be built.
     pub fn new<T>(scopes: T) -> Result<Self>
     where
         T: TryIntoScopes,
@@ -89,9 +88,9 @@ impl Changeset<'_> {
     ///
     /// # Errors
     ///
-    /// This method returns [`Error::Summary`] if no summary can be extracted,
-    /// so either there are no revisions, or the latest commit has no body. We
-    /// deliberately turn this into an error to ensure that the release process
+    /// Returns [`Error::Summary`] if no summary can be extracted, so either
+    /// there are no revisions, or the latest commit doesn't have a body. We
+    /// deliberately turn this into an error to ensure the release process
     /// can always rely on a summary being present.
     pub fn summary(&self) -> Result<&str> {
         let opt = self.revisions.first();

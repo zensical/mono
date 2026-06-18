@@ -82,10 +82,10 @@ impl<'a> Changeset<'a> {
     ///
     /// # Errors
     ///
-    /// This method returns [`Error::Repository`][] if the commit deltas can't
-    /// be retrieved. If the commit summary couldn't be parsed, the commit will
-    /// be ignored, since there are several types of commits that will not make
-    /// it into the changeset, e.g., merge commits.
+    /// Returns [`Error::Repository`][] if a commit's deltas can't be fetched.
+    /// If a commit's message couldn't be parsed, it's just ignored, since
+    /// there are several types of commits that will not make it into the
+    /// changeset, e.g., merge commits.
     ///
     /// [`Error::Repository`]: crate::changeset::Error::Repository
     pub fn add(&mut self, commit: Commit<'a>) -> Result {
@@ -126,10 +126,10 @@ impl<'a> Changeset<'a> {
     ///
     /// # Errors
     ///
-    /// This method returns [`Error::Repository`][] if a commit's deltas can't
-    /// be retrieved. If a commit's message couldn't be parsed, it will just be
-    /// ignored, since there are several types of commits that will not make it
-    /// into the changset, e.g., merge commits.
+    /// Returns [`Error::Repository`][] if a commit's deltas can't be fetched.
+    /// If a commit's message couldn't be parsed, it's just ignored, since
+    /// there are several types of commits that will not make it into the
+    /// changeset, e.g., merge commits.
     ///
     /// [`Error::Repository`]: crate::changeset::Error::Repository
     pub fn extend<T>(&mut self, iter: T) -> Result

@@ -68,7 +68,7 @@ impl Repository {
     ///
     /// # Errors
     ///
-    /// This method returns [`Error::Git`] if the operation fails.
+    /// Returns [`Error::Git`] if the operation fails.
     pub fn versions(&self) -> Result<Versions<'_>> {
         let tags = self.inner.tag_names(Some("v[0-9]*.[0-9]*.[0-9]**"))?;
         let iter = tags.iter().flatten().flatten().map(|name| {
@@ -113,8 +113,8 @@ impl Versions<'_> {
     ///
     /// # Errors
     ///
-    /// This method returns [`Error::Version`] if the given version doesn't
-    /// exist, or [`Error::Git`] if the operation fails on the repository.
+    /// Returns [`Error::Version`] if the given version doesn't exist, or
+    /// [`Error::Git`] if the operation fails on the repository.
     pub fn commits(&self, version: Option<&Version>) -> Result<Commits<'_>> {
         if let Some(version) = version {
             if !self.tags.contains_key(version) {

@@ -38,7 +38,7 @@ use crate::project::Result;
 ///
 /// # Errors
 ///
-/// This method returns [`Error::Json`][] if parsing or printing fails.
+/// Returns [`Error::Json`][] if parsing or printing fails.
 ///
 /// [`Error::Json`]: crate::project::Error::Json
 pub fn update<S>(content: S, versions: &Versions<'_>) -> Result<String>

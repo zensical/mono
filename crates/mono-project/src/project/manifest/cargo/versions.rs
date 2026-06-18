@@ -39,7 +39,7 @@ use crate::project::Result;
 ///
 /// # Errors
 ///
-/// This method returns [`Error::TomlEdit`][] if parsing or printing fails.
+/// Returns [`Error::TomlEdit`][] if parsing or printing fails.
 ///
 /// [`Error::TomlEdit`]: crate::project::Error::TomlEdit
 pub fn update<S>(content: S, versions: &Versions<'_>) -> Result<String>

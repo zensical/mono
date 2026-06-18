@@ -106,7 +106,7 @@ where
     ///
     /// # Errors
     ///
-    /// This method returns [`Error::Empty`], if no scoped projects were added.
+    /// Returns [`Error::Empty`] if the workspace has no projects.
     #[inline]
     pub fn build(self) -> Result<Workspace<T>> {
         if self.projects.is_empty() {

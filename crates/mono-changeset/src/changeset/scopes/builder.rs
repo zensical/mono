@@ -72,7 +72,7 @@ impl Builder {
     ///
     /// # Errors
     ///
-    /// This method returns [`Error::Glob`] if the [`Glob`] can't be built.
+    /// Returns [`Error::Glob`] if the [`Glob`] can't be built.
     ///
     /// # Examples
     ///
@@ -115,7 +115,7 @@ impl Builder {
     ///
     /// # Errors
     ///
-    /// This method returns [`Error::Glob`] if the [`GlobSet`][] can't be built.
+    /// Returns [`Error::Glob`] if the [`GlobSet`][] can't be built.
     ///
     /// [`GlobSet`]: globset::GlobSet
     ///

@@ -56,7 +56,7 @@ impl Repository {
     ///
     /// # Errors
     ///
-    /// This method returns [`Error::Git`] if the operation fails.
+    /// Returns [`Error::Git`] if the operation fails.
     ///
     /// # Examples
     ///
@@ -83,7 +83,7 @@ impl Repository {
     ///
     /// # Errors
     ///
-    /// This method returns [`Error::Git`] if the operation fails.
+    /// Returns [`Error::Git`] if the operation fails.
     pub fn add<S>(&self, spec: S) -> Result
     where
         S: AsRef<str>,
@@ -105,7 +105,7 @@ impl Repository {
     ///
     /// # Errors
     ///
-    /// This method returns [`Error::Git`] if the operation fails.
+    /// Returns [`Error::Git`] if the operation fails.
     pub fn commit<M>(&self, message: M) -> Result
     where
         M: AsRef<str>,
@@ -136,7 +136,7 @@ impl Repository {
     ///
     /// # Errors
     ///
-    /// This method returns [`Error::Git`] if the operation fails.
+    /// Returns [`Error::Git`] if the operation fails.
     #[allow(clippy::missing_panics_doc)]
     pub fn branch<N>(&self, name: N) -> Result
     where
@@ -159,7 +159,7 @@ impl Repository {
     ///
     /// # Errors
     ///
-    /// This method returns [`Error::Git`] if the operation fails.
+    /// Returns [`Error::Git`] if the operation fails.
     ///
     /// # Examples
     ///
@@ -192,7 +192,7 @@ impl Repository {
     ///
     /// # Errors
     ///
-    /// This method returns [`Error::Git`] if the operation fails.
+    /// Returns [`Error::Git`] if the operation fails.
     ///
     /// # Panics
     ///
@@ -223,7 +223,7 @@ impl Repository {
     ///
     /// # Errors
     ///
-    /// This method returns [`Error::Git`] if the operation fails.
+    /// Returns [`Error::Git`] if the operation fails.
     ///
     /// ```
     /// # use std::error::Error;

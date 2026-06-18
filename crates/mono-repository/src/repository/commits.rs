@@ -58,7 +58,7 @@ impl Repository {
     ///
     /// # Errors
     ///
-    /// This method returns [`Error::Git`] if the operation fails.
+    /// Returns [`Error::Git`] if the operation fails.
     ///
     /// # Examples
     ///

@@ -64,8 +64,8 @@ where
     ///
     /// # Errors
     ///
-    /// This method returns [`Error::Project`][] if a manifest can't be read,
-    /// written, updated, or synchronized.
+    /// Returns [`Error::Project`][] if a manifest can't be read, written,
+    /// updated, or synchronized.
     ///
     /// [`Error::Project`]: crate::project::workspace::Error::Project
     #[allow(clippy::missing_panics_doc)]

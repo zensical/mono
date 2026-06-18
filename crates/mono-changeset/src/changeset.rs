@@ -96,7 +96,7 @@ impl Changeset<'_> {
     pub fn summary(&self) -> Result<&str> {
         let opt = self.revisions.first();
         let summary = opt
-            .and_then(|revision| revision.commit().body())
+            .and_then(|revision| revision.commit().body().ok().flatten())
             .ok_or(Error::Summary)?;
 
         // Trim trailers and ensure non-empty summary

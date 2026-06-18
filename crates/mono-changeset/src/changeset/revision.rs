@@ -89,8 +89,12 @@ impl<'a> Changeset<'a> {
     ///
     /// [`Error::Repository`]: crate::changeset::Error::Repository
     pub fn add(&mut self, commit: Commit<'a>) -> Result {
-        if let Ok(change) = Change::from_str(commit.summary()) {
-            // Retrieve affected scopes from commit
+        let Some(summary) = commit.summary()? else {
+            return Ok(());
+        };
+
+        // Retrieve affected scopes from commit
+        if let Ok(change) = Change::from_str(summary) {
             let mut scopes = BTreeSet::new();
             for delta in commit.deltas()? {
                 scopes.extend(self.scopes.get(delta.path()));

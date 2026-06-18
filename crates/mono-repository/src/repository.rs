@@ -194,6 +194,10 @@ impl Repository {
     ///
     /// This method returns [`Error::Git`] if the operation fails.
     ///
+    /// # Panics
+    ///
+    /// Panics if the current branch shorthand cannot be decoded as UTF-8.
+    ///
     /// # Examples
     ///
     /// ```
@@ -211,9 +215,8 @@ impl Repository {
     /// ```
     pub fn on_default_branch(&self) -> Result<bool> {
         let opt = self.inner.head()?;
-        Ok(opt
-            .shorthand()
-            .is_some_and(|name| ["master", "main"].contains(&name)))
+        let name = opt.shorthand().expect("invariant");
+        Ok(["master", "main"].contains(&name))
     }
 
     /// Returns the origin remote URL.
@@ -235,7 +238,7 @@ impl Repository {
     /// ```
     pub fn url(&self) -> Result<String> {
         let remote = self.inner.find_remote("origin")?;
-        remote.url().ok_or(Error::Url).map(str::to_string)
+        Ok(remote.url()?.to_string())
     }
 }
 

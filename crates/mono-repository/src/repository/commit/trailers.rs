@@ -57,7 +57,7 @@ impl Commit<'_> {
     #[allow(clippy::missing_panics_doc)]
     #[inline]
     pub fn trailers(&self) -> Result<Trailers> {
-        Trailers::from_str(self.inner.body().unwrap_or_default())
+        Trailers::from_str(self.body()?.unwrap_or_default())
     }
 }
 

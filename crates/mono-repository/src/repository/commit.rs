@@ -106,16 +106,28 @@ impl Commit<'_> {
     }
 
     /// Returns the commit summary.
-    #[allow(clippy::missing_panics_doc)]
-    #[inline]
-    pub fn summary(&self) -> &str {
-        self.inner.summary().expect("invariant")
+    ///
+    /// # Errors
+    ///
+    /// This method returns [`Error::Git`] if the operation fails.
+    ///
+    /// [`Error::Git`]: crate::repository::Error::Git
+    pub fn summary(&self) -> Result<Option<&str>> {
+        self.inner.summary().map_err(Into::into)
     }
 
     /// Returns the commit body.
-    #[inline]
-    pub fn body(&self) -> Option<&str> {
-        self.inner.body().filter(|body| !body.is_empty())
+    ///
+    /// # Errors
+    ///
+    /// This method returns [`Error::Git`] if the operation fails.
+    ///
+    /// [`Error::Git`]: crate::repository::Error::Git
+    pub fn body(&self) -> Result<Option<&str>> {
+        self.inner
+            .body()
+            .map(|body| body.filter(|body| !body.is_empty()))
+            .map_err(Into::into)
     }
 }
 

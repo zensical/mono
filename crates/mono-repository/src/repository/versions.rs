@@ -71,7 +71,7 @@ impl Repository {
     /// This method returns [`Error::Git`] if the operation fails.
     pub fn versions(&self) -> Result<Versions<'_>> {
         let tags = self.inner.tag_names(Some("v[0-9]*.[0-9]*.[0-9]**"))?;
-        let iter = tags.iter().flatten().map(|name| {
+        let iter = tags.iter().flatten().flatten().map(|name| {
             let version = name.trim_start_matches('v').parse()?;
             Ok((version, self.find(name)?.id()))
         });

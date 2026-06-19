@@ -97,9 +97,34 @@ where
             return Ok(());
         }
 
+        let dependents = context.workspace.dependents()?;
+        // Determine canonical packages. All sinks must share the same current
+        // version and are bumped together to define the release version.
+        let sinks = dependents.sinks().collect::<Vec<_>>();
+        let Some(&sink) = sinks.first() else {
+            eprintln!("No canonical package found");
+            return Ok(());
+        };
+
+        // Ensure all canonical packages have the same version
+        let version = dependents[sink].version().expect("invariant");
+        if sinks.iter().any(|&node| {
+            dependents[node].version().expect("invariant") != version
+        }) {
+            eprintln!("Canonical packages have different versions");
+            return Ok(());
+        }
+
+        // On the initial release, create the release branch for the current
+        // canonical version and stop without changing files or creating a
+        // release commit.
+        if versions.is_empty() {
+            context.repository.branch(format!("release/v{version}"))?;
+            return Ok(());
+        }
+
         // Traverse dependents in topological order, to let the user review
         // version increment suggestions in lock-step for choosing
-        let dependents = context.workspace.dependents()?;
         dependents.bump(&mut increments, |suggestion| {
             let project = suggestion.project();
             let increments = suggestion.increments();
@@ -127,23 +152,6 @@ where
 
         // Denote completion of prompt to the user
         outro(style("Versions selected").dim())?;
-
-        // Determine canonical packages. All sinks must share the same current
-        // version and are bumped together to define the release version.
-        let sinks = dependents.sinks().collect::<Vec<_>>();
-        let Some(&sink) = sinks.first() else {
-            eprintln!("No canonical package found");
-            return Ok(());
-        };
-
-        // Ensure all canonical packages have the same version
-        let version = dependents[sink].version().expect("invariant");
-        if sinks.iter().any(|&node| {
-            dependents[node].version().expect("invariant") != version
-        }) {
-            eprintln!("Canonical packages have different versions");
-            return Ok(());
-        }
 
         // Bump all canonical packages to the highest increment, and bump the
         // release version accordingly, bumping canonical packages together

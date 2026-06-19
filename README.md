@@ -1,107 +1,108 @@
 # Mono
 
-**Mono repository automation toolkit**
-
-`mono` is a release management tool built specifically for monorepos. It validates commits, determines versions, generates changelogs, and orchestrates publishing – all with zero configuration needed for standard workflows. Rust and Node workspaces are supported out of the box, with more languages coming soon.
+`mono` is a release tool for monorepos. It validates commits, derives scopes
+from changed files, determines versions, and generates changelogs from git
+history. It is the tool we use to release all Zensical projects.
 
 ## Installation
 
-```bash
+``` bash
 cargo install mono
 ```
 
-Or use our GitHub Action:
+Or use the GitHub Action:
 
-```yaml
+``` yaml
 - uses: zensical/mono@v0
 ```
 
-## Usage
+## Modes
 
-### Version management
+### Automatic workspace discovery
+
+This is the default mode. If the repository root is a Cargo workspace or a
+Node workspace, `mono` discovers packages automatically and uses package names
+as scopes.
+
+``` toml
+[workspace]
+members = ["crates/*"]
+```
+
+``` bash
+mono list
+mono version create
+mono version changelog
+```
+
+One of `mono`'s core features is that it deduces the affected scope or scopes
+from the changed files in each commit. You do not need to maintain scope data
+by hand for normal workspaces.
+
+### Explicit multi-root configuration
+
+Use `.mono.toml` when a repository does not have a single Cargo or Node
+workspace root, but still contains multiple releasable leaf projects.
+
+``` toml
+[projects]
+integration-code = "integrations/code"
+integration-neovim = "integrations/neovim"
+integration-zed = "integrations/zed"
+```
+
+`projects` maps release scopes to explicit project roots.
+
+``` bash
+mono list
+mono version create
+mono version changelog
+```
+
+### Additional scopes
+
+Additional scopes can be configured independently of the packaging mode. They
+work with both automatic workspace discovery and explicit multi-root
+configuration.
+
+``` toml
+[scopes]
+grammar-textmate = "grammars/textmate/**"
+```
+
+These scopes are used for change detection and changelog grouping only. They
+do not contribute to version computation and they do not define releasable
+packages.
+
+## Non-goals
+
+`.mono.toml` is not intended to become a generic package-management layer.
+`mono` already supports additional scopes there, but normal Cargo and Node
+workspace discovery remains the preferred model when a regular workspace
+exists. One reason for this is that new ecosystems should be as simple as
+possible to add: `mono` only needs to learn how to discover a native manifest,
+read package names, versions, members, and inner-workspace dependencies, and
+update and synchronize that manifest during a release.
+
+More ecosystems may be added over time, but that does not imply a plan to use
+`.mono.toml` as a universal format for package and version management across
+arbitrary ecosystems.
+
+## Commands
 
 ```bash
-# Create a new version and update all packages
+# List all releasable packages in dependency order
+mono list
+
+# Create a release commit and update versions
 mono version create
 
-# Generate the changelog of a version in Markdown format
+# Print the changelog in Markdown
 mono version changelog
 
-# List the names of changed packages in topological order
+# List changed packages since the last release
 mono version changed
-
-# List versions in reverse chronological order
-mono version list
-```
-
-### Package discovery
-
-```bash
-# List the names of all packages in topological order
-mono list
-```
-
-### Commit validation
-
-```bash
-# Validate a commit message summary
-mono validate commit "feature: add authentication"
-
-# Validate a commit message in a file
-mono validate commit --file .git/COMMIT_EDITMSG
 
 # Validate a commit by identifier
 mono validate commit --id 7b5e433
 ```
-
-## Features
-
-### Monorepo-first design
-
-- **Automatic package discovery** from `Cargo.toml` workspaces or `package.json` workspaces
-- **Automatic scope detection** from directory structure based on packages
-- **Topological sorting** ensures dependencies are published before dependents
-
-### Conventional commits validation
-
-- Validates commit messages against Conventional Commits format
-- Suggests valid scopes based on actual packages in your monorepo
-- Works as a git hook or in CI
-- Clear, actionable error messages
-
-### Multi-language support
-
-- **Rust** (Cargo workspaces)
-- **Node.js** (npm/pnpm/yarn workspaces)
-- **More coming:** Python, ...
-
-### Interactive version bumping
-
-- Visual prompt showing suggested version increments
-- Computes suggestions from Conventional Commits types
-- Understands `0.0.z` (patch-only) and `0.y.z` (breaking changes = minor) ranges
-- Batch version bumping for related packages
-
-### Intelligent changelog generation
-
-- Generates changelogs from Conventional Commits
-- Groups changes by package and type (Features, Fixes, Breaking Changes)
-- Supports **changelog summaries** attached to commits for curated release notes
-- Links to issues and pull requests automatically
-
-### Change detection
-
-- Detects which packages changed since last release
-- Returns packages in topological order for publishing
-- Integrates with `cargo publish`, `npm publish`, or custom scripts
-
-## Comparison
-
-| Tool | Focus | Why mono  |
-|------|-------|------------|
-| **Lerna** | JavaScript monorepos, publishing | Language-agnostic, opinionated defaults, no Node.js required |
-| **changesets** | Developer-written changelogs | Fully automated from git history, no manual changeset files |
-| **cocogitto** | Git Conventional Commits | Monorepo-first with automatic scopes and multi-package releases |
-| **git-cliff** | Changelog generation | Interactive version selection, package-aware changelogs, topological publishing |
-| **cargo-release** | Single Rust crate releases | Multi-package workspaces with dependency ordering |
-| **semantic-release** | Automated releases | Simpler, faster, designed for monorepo batch operations |

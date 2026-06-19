@@ -478,7 +478,7 @@ checksum = "88904434abc2901f197fe8cc55f0445e7ded921dba5911dad2e2b39b48e663c4"
 
 [[package]]
 name = "mono"
-version = "0.0.9"
+version = "0.0.10"
 dependencies = [
  "clap",
  "cliclack",
@@ -495,7 +495,7 @@ dependencies = [
 
 [[package]]
 name = "mono-changeset"
-version = "0.0.6"
+version = "0.0.7"
 dependencies = [
  "globset",
  "mono-project",
@@ -520,7 +520,7 @@ dependencies = [
 
 [[package]]
 name = "mono-repository"
-version = "0.0.4"
+version = "0.0.5"
 dependencies = [
  "git2",
  "semver",

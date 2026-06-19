@@ -30,7 +30,7 @@ use std::ops::{Bound, RangeBounds};
 use crate::repository::id::Id;
 use crate::repository::{Error, Repository, Result};
 
-use super::commit::Commit;
+use super::Commit;
 
 // ----------------------------------------------------------------------------
 // Structs

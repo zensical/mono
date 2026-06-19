@@ -32,11 +32,11 @@ use super::id::Id;
 use super::Repository;
 
 mod delta;
-mod deltas;
+mod iter;
 mod trailers;
 
-pub use delta::Delta;
-pub use deltas::Deltas;
+pub use delta::{Delta, Deltas};
+pub use iter::Commits;
 pub use trailers::Trailers;
 
 // ----------------------------------------------------------------------------

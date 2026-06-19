@@ -21,19 +21,16 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 
-name: Check
+name: Security
 
 on:
-  push:
-    branches:
-      - master
-  pull_request:
-    branches:
-      - master
+  schedule:
+    - cron: "0 4 * * 1"
+  workflow_dispatch:
 
 jobs:
-  clippy:
-    name: Clippy
+  audit:
+    name: Audit
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -41,49 +38,11 @@ jobs:
         with:
           ref: ${{ github.sha }}
 
-      - name: Set up Rust
-        uses: dtolnay/rust-toolchain@master
-        with:
-          toolchain: stable
+      - name: Set up Rust cache
+        uses: Swatinem/rust-cache@v2
 
-      - name: Run clippy
-        run: cargo clippy -- -D warnings
+      - name: Install cargo-audit
+        run: cargo install cargo-audit
 
-  format:
-    name: Format
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v6
-        with:
-          ref: ${{ github.sha }}
-
-      - name: Set up Rust
-        uses: dtolnay/rust-toolchain@master
-        with:
-          toolchain: stable
-
-      - name: Run rustfmt
-        run: find crates -name "*.rs" -exec rustfmt --check {} \;
-
-  release:
-    name: Release
-    runs-on: ubuntu-latest
-    if: |
-      startsWith(github.event.pull_request.head.ref, 'release/')
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v6
-        with:
-          ref: ${{ github.sha }}
-          fetch-depth: 0
-
-      - name: Check commit count
-        run: |
-          BASE="${{ github.event.pull_request.base.sha }}"
-          HEAD="${{ github.event.pull_request.head.sha }}"
-          COMMITS=$(git rev-list --count $HEAD ^$BASE)
-          if [ "$COMMITS" -ne 1 ]; then
-            echo "Release branch must contain exactly one commit, found $COMMITS"
-            exit 1
-          fi
+      - name: Audit dependencies
+        run: cargo audit

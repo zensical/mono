@@ -24,10 +24,22 @@ This is the default mode. If the repository root is a Cargo workspace or a
 Node workspace, `mono` discovers packages automatically and uses package names
 as scopes.
 
+Cargo:
+
 ``` toml
 [workspace]
 members = ["crates/*"]
 ```
+
+Node:
+
+``` json
+{
+  "workspaces": ["packages/*"]
+}
+```
+
+To lists and release packages, simply run:
 
 ``` bash
 mono list

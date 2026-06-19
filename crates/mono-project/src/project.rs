@@ -70,7 +70,7 @@ where
     ///
     /// # Errors
     ///
-    /// Returns [`Error::Io`], if the project could not be read.
+    /// Returns [`Error::Io`] if the project could not be read.
     pub fn read<P>(path: P) -> Result<Self>
     where
         P: AsRef<Path>,

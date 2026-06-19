@@ -32,7 +32,7 @@ use std::fmt::{self, Debug};
 use std::iter::Rev;
 use std::ops::RangeBounds;
 
-use super::commits::Commits;
+use super::commit::Commits;
 use super::error::{Error, Result};
 use super::id::Id;
 use super::Repository;

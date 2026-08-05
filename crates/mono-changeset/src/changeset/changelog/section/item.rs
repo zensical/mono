@@ -78,7 +78,7 @@ impl Item<'_> {
         // Write commit identifier, optionally as link
         let short = id.short();
         if let Some(url) = &options.commit_url {
-            write!(f, "[{short}]({url}{id})")?;
+            write!(f, "[`{short}`]({url}{id})")?;
         } else {
             Display::fmt(&short, f)?;
         }

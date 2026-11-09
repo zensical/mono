@@ -90,6 +90,9 @@ jobs:
         uses: Swatinem/rust-cache@v2
         with:
           key: ${{ matrix.target }}
+          save-if: >-
+            ${{ github.event_name == 'push' &&
+                github.ref == 'refs/heads/master' }}
 
       - name: Build artifact
         run: cargo build --release --locked --target ${{ matrix.target }}

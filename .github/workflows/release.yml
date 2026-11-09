@@ -52,7 +52,7 @@ jobs:
     name: Create tag
     permissions:
       contents: write
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     needs: build
     outputs:
       version: ${{ steps.version.outputs.version }}
@@ -94,7 +94,7 @@ jobs:
     name: Create release
     permissions:
       contents: write
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     needs: tag
     env:
       VERSION: ${{ needs.tag.outputs.version }}
@@ -140,7 +140,7 @@ jobs:
     name: Publish
     permissions:
       contents: read
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     needs:
       - tag
       - release

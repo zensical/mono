@@ -97,6 +97,9 @@ jobs:
             ${{ github.event_name == 'push' &&
                 github.ref == 'refs/heads/master' }}
 
+      - name: Run tests
+        run: cargo test --locked --workspace --target ${{ matrix.target }}
+
       - name: Build artifact
         run: cargo build --release --locked --target ${{ matrix.target }}
 

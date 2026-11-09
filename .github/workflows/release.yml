@@ -38,22 +38,22 @@ jobs:
     if: |
       github.event.pull_request.merged == true &&
       startsWith(github.event.pull_request.head.ref, 'release/')
-    # actionlint 1.7.12 does not yet support the equivalent $/ syntax.
-    uses: ./.github/workflows/build.yml # zizmor: ignore[self-repository]
     permissions:
       contents: read
       attestations: write
       id-token: write
+    # actionlint 1.7.12 does not yet support the equivalent $/ syntax.
+    uses: ./.github/workflows/build.yml # zizmor: ignore[self-repository]
     with:
       ref: ${{ github.event.pull_request.merge_commit_sha }}
       attestations: true
 
   tag:
     name: Create tag
+    needs: build
     permissions:
       contents: write
     runs-on: ubuntu-26.04
-    needs: build
     outputs:
       version: ${{ steps.version.outputs.version }}
     steps:
@@ -92,10 +92,10 @@ jobs:
 
   release:
     name: Create release
+    needs: tag
     permissions:
       contents: write
     runs-on: ubuntu-26.04
-    needs: tag
     env:
       VERSION: ${{ needs.tag.outputs.version }}
     steps:
@@ -138,12 +138,12 @@ jobs:
 
   publish:
     name: Publish
-    permissions:
-      contents: read
-    runs-on: ubuntu-26.04
     needs:
       - tag
       - release
+    permissions:
+      contents: read
+    runs-on: ubuntu-26.04
     env:
       VERSION: ${{ needs.tag.outputs.version }}
     steps:

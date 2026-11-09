@@ -39,14 +39,13 @@ on:
         required: true
         type: boolean
 
-permissions:
-  contents: read
-  attestations: write # Required for attestations
-  id-token: write # Required for OIDC
+permissions: {}
 
 jobs:
   build:
     name: Executable (${{ matrix.name }})
+    permissions:
+      contents: read
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -104,31 +103,46 @@ jobs:
         run: cargo build --release --locked --target ${{ matrix.target }}
 
       - name: Create artifact archive (Unix)
-        shell: bash
         if: ${{ contains(matrix.target, 'windows') == false }}
+        shell: bash
         run: |
           mkdir -p artifacts
           tar -czf artifacts/mono-${{ matrix.artifact }}.tar.gz -C \
             target/${{ matrix.target }}/release mono
 
       - name: Create artifact archive (Windows)
-        shell: pwsh
         if: ${{ contains(matrix.target, 'windows') == true }}
+        shell: pwsh
         run: |
           mkdir -p artifacts
           Compress-Archive `
             -Path target/${{ matrix.target }}/release/mono.exe `
             -DestinationPath artifacts/mono-${{ matrix.artifact }}.zip
 
-      - name: Create artifact attestation
-        if: inputs.attestations == true
-        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4
-        with:
-          show-summary: false
-          subject-path: artifacts/*
-
       - name: Upload artifact
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: mono-${{ matrix.artifact }}
           path: artifacts/*
+
+  attestations:
+    name: Attestations
+    if: inputs.attestations == true
+    needs: build
+    permissions:
+      contents: read
+      attestations: write
+      id-token: write
+    runs-on: ubuntu-26.04
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - name: Create artifact attestation
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4
+        with:
+          show-summary: false
+          subject-path: artifacts/*

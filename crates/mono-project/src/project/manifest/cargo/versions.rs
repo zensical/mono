@@ -65,12 +65,10 @@ fn update_package_version(doc: &mut DocumentMut, versions: &Versions<'_>) {
     if let Some(package) = doc
         .get_mut("package")
         .and_then(|item| item.as_table_like_mut())
+        && let Some(name) = package.get("name").and_then(|item| item.as_str())
+        && let Some(version) = versions.get(name)
     {
-        if let Some(name) = package.get("name").and_then(|item| item.as_str()) {
-            if let Some(version) = versions.get(name) {
-                package.insert("version", value(version.to_string()));
-            }
-        }
+        package.insert("version", value(version.to_string()));
     }
 }
 
@@ -109,12 +107,12 @@ fn update_dependencies(doc: &mut DocumentMut, versions: &Versions<'_>) {
 
 /// Updates a dependency with a new version.
 fn update_dependency(item: &mut Item, version: &Version) {
-    if let Some(table) = item.as_table_like() {
-        if let Some(workspace) = table.get("workspace") {
-            // Skip if dependency inherits from workspace
-            if workspace.as_bool() == Some(true) {
-                return;
-            }
+    if let Some(table) = item.as_table_like()
+        && let Some(workspace) = table.get("workspace")
+    {
+        // Skip if dependency inherits from workspace
+        if workspace.as_bool() == Some(true) {
+            return;
         }
     }
 

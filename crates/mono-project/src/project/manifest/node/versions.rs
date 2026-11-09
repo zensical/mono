@@ -63,13 +63,10 @@ where
 
 /// Updates `version` with a new version.
 fn update_version(doc: &mut Map<String, Value>, versions: &Versions<'_>) {
-    if let Some(name) = doc.get("name").and_then(|item| item.as_str()) {
-        if let Some(version) = versions.get(name) {
-            doc.insert(
-                String::from("version"),
-                Value::String(version.to_string()),
-            );
-        }
+    if let Some(name) = doc.get("name").and_then(|item| item.as_str())
+        && let Some(version) = versions.get(name)
+    {
+        doc.insert(String::from("version"), Value::String(version.to_string()));
     }
 }
 

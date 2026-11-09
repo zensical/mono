@@ -169,17 +169,17 @@ impl FromStr for Change {
 
         // Ensure summary is lowercase, unless it's an entire uppercase word,
         // e.g., an acronym like README, API, HTTP, or URL
-        if let Some(char) = summary.chars().next() {
-            if char.is_uppercase() {
-                let word = summary.split_whitespace().next().unwrap_or("");
-                let is_acronym = word
-                    .chars()
-                    .all(|char| !char.is_alphabetic() || char.is_uppercase());
+        if let Some(char) = summary.chars().next()
+            && char.is_uppercase()
+        {
+            let word = summary.split_whitespace().next().unwrap_or("");
+            let is_acronym = word
+                .chars()
+                .all(|char| !char.is_alphabetic() || char.is_uppercase());
 
-                // If not an acronym, return error
-                if !is_acronym {
-                    return Err(Error::Casing);
-                }
+            // If not an acronym, return error
+            if !is_acronym {
+                return Err(Error::Casing);
             }
         }
 

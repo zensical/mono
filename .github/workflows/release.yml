@@ -115,16 +115,53 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          mono version changelog -s $VERSION > notes.txt
-          gh release create $VERSION \
-            --title ${VERSION#v} \
-            --notes-file notes.txt \
-            --draft
+          error="$RUNNER_TEMP/release-error.txt"
+          if gh api "repos/$GITHUB_REPOSITORY/releases/tags/$VERSION" \
+            > /dev/null 2> "$error"; then
+            echo "Release $VERSION already exists"
+          elif grep -q 'HTTP 404' "$error"; then
+            mono version changelog -s "$VERSION" > notes.txt
+            gh release create "$VERSION" \
+              --verify-tag \
+              --title "${VERSION#v}" \
+              --notes-file notes.txt \
+              --draft
+          else
+            cat "$error" >&2
+            exit 1
+          fi
 
       - name: Upload release artifacts
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release upload $VERSION artifacts/*
+        run: |
+          shopt -s nullglob
+          files=(artifacts/*)
+          if [ "${#files[@]}" -eq 0 ]; then
+            echo "No release artifacts found" >&2
+            exit 1
+          fi
+          assets=$(gh release view "$VERSION" --json assets \
+            --jq '.assets[].name')
+          draft=$(gh release view "$VERSION" --json isDraft \
+            --jq '.isDraft')
+          mkdir -p "$RUNNER_TEMP/release-assets"
+          for file in "${files[@]}"; do
+            name=$(basename "$file")
+            if grep -Fxq -- "$name" <<< "$assets"; then
+              gh release download "$VERSION" --pattern "$name" \
+                --dir "$RUNNER_TEMP/release-assets" --clobber
+              if ! cmp -s "$file" "$RUNNER_TEMP/release-assets/$name"; then
+                echo "Existing asset $name differs from the build" >&2
+                exit 1
+              fi
+            elif [ "$draft" = true ]; then
+              gh release upload "$VERSION" "$file"
+            else
+              echo "Published release is missing asset $name" >&2
+              exit 1
+            fi
+          done
 
       - name: Publish release
         env:
@@ -155,14 +192,27 @@ jobs:
       - name: Set up mono
         uses: zensical/mono@2be38f5a76677c8e5c342f269b78aaccc8631b7c # v0
 
-      - name: Authenticate with crates.io
+      - name: Sign in to crates.io
         id: crates
         uses: rust-lang/crates-io-auth-action@3268eb413133e2960fa4ae0e963ca76380c54cd9 # v1.0.6
 
       - name: Publish to crates.io
         run: |
-          mono version changed $VERSION | while read -r package; do
-            cargo publish --package $package --no-verify --locked
+          cargo metadata --no-deps --format-version 1 --locked > metadata.json
+          mono version changed "$VERSION" | while read -r package; do
+            [ -n "$package" ] || continue
+            if cargo publish --package "$package" --no-verify --locked; then
+              continue
+            fi
+            version=$(jq -er --arg name "$package" \
+              '.packages[] | select(.name == $name) | .version' metadata.json)
+            if cargo info "$package@$version" --registry crates-io \
+              > /dev/null; then
+              echo "$package $version is already published"
+            else
+              echo "Could not publish or verify $package $version" >&2
+              exit 1
+            fi
           done
         env:
           CARGO_REGISTRY_TOKEN: ${{ steps.crates.outputs.token }}

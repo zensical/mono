@@ -61,25 +61,29 @@ jobs:
 
       - name: Determine version
         id: version
+        env:
+          RELEASE_BRANCH: ${{ github.event.pull_request.head.ref }}
         run: |
-          BRANCH="${{ github.event.pull_request.head.ref }}"
-          VERSION=${BRANCH#release/}
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          VERSION=${RELEASE_BRANCH#release/}
+          git check-ref-format "refs/tags/$VERSION"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Create and push tag
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
         run: |
-          VERSION="${{ steps.version.outputs.version }}"
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git tag -a $VERSION -m "Release $VERSION"
-          git push origin $VERSION
+          git tag -a -m "Release $VERSION" -- "$VERSION"
+          git push origin "refs/tags/$VERSION"
 
       - name: Create and push major version tag
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
         run: |
-          VERSION="${{ steps.version.outputs.version }}"
           MAJOR_VERSION="${VERSION%%.*}"
-          git tag -f $MAJOR_VERSION $VERSION
-          git push -f origin $MAJOR_VERSION
+          git tag -f -- "$MAJOR_VERSION" "$VERSION"
+          git push -f origin "refs/tags/$MAJOR_VERSION"
 
   release:
     name: Create release

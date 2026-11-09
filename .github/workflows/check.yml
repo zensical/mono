@@ -46,6 +46,13 @@ jobs:
         with:
           toolchain: stable
 
+      - name: Set up Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          save-if: >-
+            ${{ github.event_name == 'push' &&
+                github.ref == 'refs/heads/master' }}
+
       - name: Run clippy
         run: cargo clippy -- -D warnings
 
@@ -84,6 +91,7 @@ jobs:
           HEAD="${{ github.event.pull_request.head.sha }}"
           COMMITS=$(git rev-list --count $HEAD ^$BASE)
           if [ "$COMMITS" -ne 1 ]; then
-            echo "Release branch must contain exactly one commit, found $COMMITS"
+            echo "Release branch must contain exactly one commit," \
+              "found $COMMITS"
             exit 1
           fi

@@ -42,7 +42,6 @@ jobs:
       contents: read
       attestations: write
       id-token: write
-    # actionlint 1.7.12 does not yet support the equivalent $/ syntax.
     uses: ./.github/workflows/build.yml # zizmor: ignore[self-repository]
     with:
       ref: ${{ github.event.pull_request.merge_commit_sha }}
@@ -57,7 +56,6 @@ jobs:
     outputs:
       version: ${{ steps.version.outputs.version }}
     steps:
-      # Git credentials are required to push the release tags.
       - name: Checkout repository # zizmor: ignore[artipacked]
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
@@ -79,16 +77,13 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git tag -a -m "Release $VERSION" -- "$VERSION"
+          if git show-ref --verify --quiet "refs/tags/$VERSION"; then
+            test "$(git rev-parse "$VERSION^{commit}")" = \
+              "$(git rev-parse HEAD^{commit})"
+          else
+            git tag -a -m "Release $VERSION" -- "$VERSION"
+          fi
           git push origin "refs/tags/$VERSION"
-
-      - name: Create and push major version tag
-        env:
-          VERSION: ${{ steps.version.outputs.version }}
-        run: |
-          MAJOR_VERSION="${VERSION%%.*}"
-          git tag -f -- "$MAJOR_VERSION" "$VERSION"
-          git push -f origin "refs/tags/$MAJOR_VERSION"
 
   release:
     name: Create release
@@ -166,3 +161,36 @@ jobs:
           done
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+
+  promote:
+    name: Move major tag
+    needs:
+      - tag
+      - publish
+    permissions:
+      contents: write
+    runs-on: ubuntu-26.04
+    env:
+      VERSION: ${{ needs.tag.outputs.version }}
+    steps:
+      - name: Checkout repository # zizmor: ignore[artipacked]
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ github.event.pull_request.merge_commit_sha }}
+          fetch-depth: 0
+
+      - name: Move major version tag
+        run: |
+          major="${VERSION%%.*}"
+          ref="refs/tags/$major"
+          current=$(git ls-remote --refs origin "$ref")
+          current=${current%%$'\t'*}
+          if [ -n "$current" ]; then
+            git fetch --no-tags origin "$ref"
+            if ! git merge-base --is-ancestor FETCH_HEAD HEAD; then
+              echo "Major tag is not an ancestor of this release" >&2
+              exit 1
+            fi
+          fi
+          git tag -f -- "$major" HEAD
+          git push --force-with-lease="$ref:$current" origin "$ref"

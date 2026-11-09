@@ -30,10 +30,7 @@ on:
     branches:
       - master
 
-permissions:
-  contents: write # Required for tags and releases
-  attestations: write # Required for attestations
-  id-token: write # Required for OIDC
+permissions: {}
 
 jobs:
   build:
@@ -41,65 +38,80 @@ jobs:
     if: |
       github.event.pull_request.merged == true &&
       startsWith(github.event.pull_request.head.ref, 'release/')
-    uses: ./.github/workflows/build.yml
+    # actionlint 1.7.12 does not yet support the equivalent $/ syntax.
+    uses: ./.github/workflows/build.yml # zizmor: ignore[self-repository]
+    permissions:
+      contents: read
+      attestations: write
+      id-token: write
     with:
       ref: ${{ github.event.pull_request.merge_commit_sha }}
       attestations: true
 
   tag:
     name: Create tag
-    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    runs-on: ubuntu-26.04
     needs: build
     outputs:
       version: ${{ steps.version.outputs.version }}
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v6
+      # Git credentials are required to push the release tags.
+      - name: Checkout repository # zizmor: ignore[artipacked]
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           ref: ${{ github.event.pull_request.merge_commit_sha }}
           fetch-depth: 0
 
       - name: Determine version
         id: version
+        env:
+          RELEASE_BRANCH: ${{ github.event.pull_request.head.ref }}
         run: |
-          BRANCH="${{ github.event.pull_request.head.ref }}"
-          VERSION=${BRANCH#release/}
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          VERSION=${RELEASE_BRANCH#release/}
+          git check-ref-format "refs/tags/$VERSION"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Create and push tag
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
         run: |
-          VERSION="${{ steps.version.outputs.version }}"
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git tag -a $VERSION -m "Release $VERSION"
-          git push origin $VERSION
+          git tag -a -m "Release $VERSION" -- "$VERSION"
+          git push origin "refs/tags/$VERSION"
 
       - name: Create and push major version tag
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
         run: |
-          VERSION="${{ steps.version.outputs.version }}"
           MAJOR_VERSION="${VERSION%%.*}"
-          git tag -f $MAJOR_VERSION $VERSION
-          git push -f origin $MAJOR_VERSION
+          git tag -f -- "$MAJOR_VERSION" "$VERSION"
+          git push -f origin "refs/tags/$MAJOR_VERSION"
 
   release:
     name: Create release
-    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    runs-on: ubuntu-26.04
     needs: tag
     env:
       VERSION: ${{ needs.tag.outputs.version }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           ref: ${{ github.event.pull_request.merge_commit_sha }}
           fetch-depth: 0
           fetch-tags: true
+          persist-credentials: false
 
       - name: Set up mono
-        uses: zensical/mono@v0
+        uses: zensical/mono@2be38f5a76677c8e5c342f269b78aaccc8631b7c # v0
 
       - name: Download artifacts
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
         with:
           path: artifacts
           merge-multiple: true
@@ -126,7 +138,9 @@ jobs:
 
   publish:
     name: Publish
-    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    runs-on: ubuntu-26.04
     needs:
       - tag
       - release
@@ -134,17 +148,19 @@ jobs:
       VERSION: ${{ needs.tag.outputs.version }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           ref: ${{ github.event.pull_request.merge_commit_sha }}
           fetch-depth: 0
           fetch-tags: true
+          persist-credentials: false
 
       - name: Set up mono
-        uses: zensical/mono@v0
+        uses: zensical/mono@2be38f5a76677c8e5c342f269b78aaccc8631b7c # v0
 
+      # Replace the registry token after configuring crates.io trust.
       - name: Publish to crates.io
-        run: |
+        run: | # zizmor: ignore[use-trusted-publishing]
           mono version changed $VERSION | while read -r package; do
             cargo publish --package $package --no-verify --locked
           done

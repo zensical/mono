@@ -25,24 +25,42 @@ name: Security
 
 on:
   schedule:
-    - cron: "0 4 * * 1"
+    - cron: "30 3 * * *"
   workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   audit:
     name: Audit
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           ref: ${{ github.sha }}
+          persist-credentials: false
 
-      - name: Set up Rust cache
-        uses: Swatinem/rust-cache@v2
+      - name: Restore cargo-audit
+        id: audit-cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: ${{ runner.temp }}/cargo-audit/bin/cargo-audit
+          key: cargo-audit-0.22.2-${{ runner.os }}-${{ runner.arch }}
 
       - name: Install cargo-audit
-        run: cargo install cargo-audit
+        if: steps.audit-cache.outputs.cache-hit != 'true'
+        run: |
+          cargo install cargo-audit --version 0.22.2 --locked \
+            --root "$RUNNER_TEMP/cargo-audit"
+
+      - name: Save cargo-audit
+        if: steps.audit-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: ${{ runner.temp }}/cargo-audit/bin/cargo-audit
+          key: ${{ steps.audit-cache.outputs.cache-primary-key }}
 
       - name: Audit dependencies
-        run: cargo audit
+        run: '"$RUNNER_TEMP/cargo-audit/bin/cargo-audit" audit'

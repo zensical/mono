@@ -30,10 +30,7 @@ on:
     branches:
       - master
 
-permissions:
-  contents: write # Required for tags and releases
-  attestations: write # Required for attestations
-  id-token: write # Required for OIDC
+permissions: {}
 
 jobs:
   build:
@@ -41,19 +38,27 @@ jobs:
     if: |
       github.event.pull_request.merged == true &&
       startsWith(github.event.pull_request.head.ref, 'release/')
-    uses: ./.github/workflows/build.yml
+    # actionlint 1.7.12 does not yet support the equivalent $/ syntax.
+    uses: ./.github/workflows/build.yml # zizmor: ignore[self-repository]
+    permissions:
+      contents: read
+      attestations: write
+      id-token: write
     with:
       ref: ${{ github.event.pull_request.merge_commit_sha }}
       attestations: true
 
   tag:
     name: Create tag
+    permissions:
+      contents: write
     runs-on: ubuntu-latest
     needs: build
     outputs:
       version: ${{ steps.version.outputs.version }}
     steps:
-      - name: Checkout repository
+      # Git credentials are required to push the release tags.
+      - name: Checkout repository # zizmor: ignore[artipacked]
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           ref: ${{ github.event.pull_request.merge_commit_sha }}
@@ -87,6 +92,8 @@ jobs:
 
   release:
     name: Create release
+    permissions:
+      contents: write
     runs-on: ubuntu-latest
     needs: tag
     env:
@@ -98,6 +105,7 @@ jobs:
           ref: ${{ github.event.pull_request.merge_commit_sha }}
           fetch-depth: 0
           fetch-tags: true
+          persist-credentials: false
 
       - name: Set up mono
         uses: zensical/mono@2be38f5a76677c8e5c342f269b78aaccc8631b7c # v0
@@ -130,6 +138,8 @@ jobs:
 
   publish:
     name: Publish
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     needs:
       - tag
@@ -143,12 +153,14 @@ jobs:
           ref: ${{ github.event.pull_request.merge_commit_sha }}
           fetch-depth: 0
           fetch-tags: true
+          persist-credentials: false
 
       - name: Set up mono
         uses: zensical/mono@2be38f5a76677c8e5c342f269b78aaccc8631b7c # v0
 
+      # Replace the registry token after configuring crates.io trust.
       - name: Publish to crates.io
-        run: |
+        run: | # zizmor: ignore[use-trusted-publishing]
           mono version changed $VERSION | while read -r package; do
             cargo publish --package $package --no-verify --locked
           done

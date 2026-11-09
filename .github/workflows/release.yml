@@ -54,7 +54,7 @@ jobs:
       version: ${{ steps.version.outputs.version }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           ref: ${{ github.event.pull_request.merge_commit_sha }}
           fetch-depth: 0
@@ -93,17 +93,17 @@ jobs:
       VERSION: ${{ needs.tag.outputs.version }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           ref: ${{ github.event.pull_request.merge_commit_sha }}
           fetch-depth: 0
           fetch-tags: true
 
       - name: Set up mono
-        uses: zensical/mono@v0
+        uses: zensical/mono@2be38f5a76677c8e5c342f269b78aaccc8631b7c # v0
 
       - name: Download artifacts
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
         with:
           path: artifacts
           merge-multiple: true
@@ -138,14 +138,14 @@ jobs:
       VERSION: ${{ needs.tag.outputs.version }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           ref: ${{ github.event.pull_request.merge_commit_sha }}
           fetch-depth: 0
           fetch-tags: true
 
       - name: Set up mono
-        uses: zensical/mono@v0
+        uses: zensical/mono@2be38f5a76677c8e5c342f269b78aaccc8631b7c # v0
 
       - name: Publish to crates.io
         run: |

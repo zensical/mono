@@ -124,6 +124,7 @@ jobs:
         with:
           name: mono-${{ matrix.artifact }}
           path: artifacts/*
+          if-no-files-found: error
 
   attestations:
     name: Attestations

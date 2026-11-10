@@ -38,26 +38,24 @@ jobs:
     if: |
       github.event.pull_request.merged == true &&
       startsWith(github.event.pull_request.head.ref, 'release/')
-    # actionlint 1.7.12 does not yet support the equivalent $/ syntax.
-    uses: ./.github/workflows/build.yml # zizmor: ignore[self-repository]
     permissions:
       contents: read
       attestations: write
       id-token: write
+    uses: ./.github/workflows/build.yml # zizmor: ignore[self-repository]
     with:
       ref: ${{ github.event.pull_request.merge_commit_sha }}
       attestations: true
 
   tag:
     name: Create tag
+    needs: build
     permissions:
       contents: write
     runs-on: ubuntu-26.04
-    needs: build
     outputs:
       version: ${{ steps.version.outputs.version }}
     steps:
-      # Git credentials are required to push the release tags.
       - name: Checkout repository # zizmor: ignore[artipacked]
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
@@ -79,23 +77,20 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git tag -a -m "Release $VERSION" -- "$VERSION"
+          if git show-ref --verify --quiet "refs/tags/$VERSION"; then
+            test "$(git rev-parse "$VERSION^{commit}")" = \
+              "$(git rev-parse HEAD^{commit})"
+          else
+            git tag -a -m "Release $VERSION" -- "$VERSION"
+          fi
           git push origin "refs/tags/$VERSION"
-
-      - name: Create and push major version tag
-        env:
-          VERSION: ${{ steps.version.outputs.version }}
-        run: |
-          MAJOR_VERSION="${VERSION%%.*}"
-          git tag -f -- "$MAJOR_VERSION" "$VERSION"
-          git push -f origin "refs/tags/$MAJOR_VERSION"
 
   release:
     name: Create release
+    needs: tag
     permissions:
       contents: write
     runs-on: ubuntu-26.04
-    needs: tag
     env:
       VERSION: ${{ needs.tag.outputs.version }}
     steps:
@@ -120,30 +115,64 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          mono version changelog -s $VERSION > notes.txt
-          gh release create $VERSION \
-            --title ${VERSION#v} \
-            --notes-file notes.txt \
-            --draft
+          error="$RUNNER_TEMP/release-error.txt"
+          if gh api "repos/$GITHUB_REPOSITORY/releases/tags/$VERSION" \
+            > /dev/null 2> "$error"; then
+            echo "Release $VERSION already exists"
+          elif grep -q 'HTTP 404' "$error"; then
+            mono version changelog -s "$VERSION" > notes.txt
+            gh release create "$VERSION" \
+              --verify-tag \
+              --title "${VERSION#v}" \
+              --notes-file notes.txt \
+              --draft
+          else
+            cat "$error" >&2
+            exit 1
+          fi
 
       - name: Upload release artifacts
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release upload $VERSION artifacts/*
-
-      - name: Publish release
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: gh release edit $VERSION --draft=false
+        run: |
+          shopt -s nullglob
+          files=(artifacts/*)
+          if [ "${#files[@]}" -eq 0 ]; then
+            echo "No release artifacts found" >&2
+            exit 1
+          fi
+          assets=$(gh release view "$VERSION" --json assets \
+            --jq '.assets[].name')
+          draft=$(gh release view "$VERSION" --json isDraft \
+            --jq '.isDraft')
+          mkdir -p "$RUNNER_TEMP/release-assets"
+          for file in "${files[@]}"; do
+            name=$(basename "$file")
+            if grep -Fxq -- "$name" <<< "$assets"; then
+              gh release download "$VERSION" --pattern "$name" \
+                --dir "$RUNNER_TEMP/release-assets" --clobber
+              if ! cmp -s "$file" "$RUNNER_TEMP/release-assets/$name"; then
+                echo "Existing asset $name differs from the build" >&2
+                exit 1
+              fi
+            elif [ "$draft" = true ]; then
+              gh release upload "$VERSION" "$file"
+            else
+              echo "Published release is missing asset $name" >&2
+              exit 1
+            fi
+          done
 
   publish:
     name: Publish
-    permissions:
-      contents: read
-    runs-on: ubuntu-26.04
     needs:
       - tag
       - release
+    permissions:
+      contents: read
+      id-token: write
+    runs-on: ubuntu-26.04
+    environment: crates
     env:
       VERSION: ${{ needs.tag.outputs.version }}
     steps:
@@ -158,11 +187,76 @@ jobs:
       - name: Set up mono
         uses: zensical/mono@2be38f5a76677c8e5c342f269b78aaccc8631b7c # v0
 
-      # Replace the registry token after configuring crates.io trust.
+      - name: Sign in to crates.io
+        id: crates
+        uses: rust-lang/crates-io-auth-action@3268eb413133e2960fa4ae0e963ca76380c54cd9 # v1.0.6
+
       - name: Publish to crates.io
-        run: | # zizmor: ignore[use-trusted-publishing]
-          mono version changed $VERSION | while read -r package; do
-            cargo publish --package $package --no-verify --locked
+        run: |
+          cargo metadata --no-deps --format-version 1 --locked > metadata.json
+          mono version changed "$VERSION" | while read -r package; do
+            [ -n "$package" ] || continue
+            if cargo publish --package "$package" --no-verify --locked; then
+              continue
+            fi
+            version=$(jq -er --arg name "$package" \
+              '.packages[] | select(.name == $name) | .version' metadata.json)
+            if cargo info "$package@$version" --registry crates-io \
+              > /dev/null; then
+              echo "$package $version is already published"
+            else
+              echo "Could not publish or verify $package $version" >&2
+              exit 1
+            fi
           done
         env:
-          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+          CARGO_REGISTRY_TOKEN: ${{ steps.crates.outputs.token }}
+
+  publish-release:
+    name: Publish release
+    needs:
+      - tag
+      - publish
+    permissions:
+      contents: write
+    runs-on: ubuntu-26.04
+    env:
+      GH_REPO: ${{ github.repository }}
+      GH_TOKEN: ${{ github.token }}
+      VERSION: ${{ needs.tag.outputs.version }}
+    steps:
+      - name: Publish release
+        run: gh release edit "$VERSION" --draft=false
+
+  promote:
+    name: Move major tag
+    needs:
+      - tag
+      - publish-release
+    permissions:
+      contents: write
+    runs-on: ubuntu-26.04
+    env:
+      VERSION: ${{ needs.tag.outputs.version }}
+    steps:
+      - name: Checkout repository # zizmor: ignore[artipacked]
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ github.event.pull_request.merge_commit_sha }}
+          fetch-depth: 0
+
+      - name: Move major version tag
+        run: |
+          major="${VERSION%%.*}"
+          ref="refs/tags/$major"
+          current=$(git ls-remote --refs origin "$ref")
+          current=${current%%$'\t'*}
+          if [ -n "$current" ]; then
+            git fetch --no-tags origin "$ref"
+            if ! git merge-base --is-ancestor FETCH_HEAD HEAD; then
+              echo "Major tag is not an ancestor of this release" >&2
+              exit 1
+            fi
+          fi
+          git tag -f -- "$major" HEAD
+          git push --force-with-lease="$ref:$current" origin "$ref"

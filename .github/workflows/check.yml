@@ -31,12 +31,13 @@ on:
     branches:
       - master
 
-permissions:
-  contents: read
+permissions: {}
 
 jobs:
   clippy:
     name: Clippy
+    permissions:
+      contents: read
     runs-on: ubuntu-26.04
     steps:
       - name: Checkout repository
@@ -62,6 +63,8 @@ jobs:
 
   msrv:
     name: Minimum Rust version
+    permissions:
+      contents: read
     runs-on: ubuntu-26.04
     steps:
       - name: Checkout repository
@@ -80,9 +83,9 @@ jobs:
 
   zizmor:
     name: Zizmor
-    runs-on: ubuntu-26.04
     permissions:
       contents: read
+    runs-on: ubuntu-26.04
     steps:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -98,6 +101,8 @@ jobs:
 
   format:
     name: Format
+    permissions:
+      contents: read
     runs-on: ubuntu-26.04
     steps:
       - name: Checkout repository
@@ -116,9 +121,11 @@ jobs:
 
   release:
     name: Release
-    runs-on: ubuntu-26.04
     if: |
       startsWith(github.event.pull_request.head.ref, 'release/')
+    permissions:
+      contents: read
+    runs-on: ubuntu-26.04
     steps:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7

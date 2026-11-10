@@ -16,6 +16,14 @@ Or use the GitHub Action:
 - uses: zensical/mono@v0
 ```
 
+The action installs the latest release by default. To install a specific version:
+
+``` yaml
+- uses: zensical/mono@v0
+  with:
+    version: v0.0.11
+```
+
 ## Modes
 
 ### Automatic workspace discovery

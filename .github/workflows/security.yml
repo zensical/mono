@@ -24,6 +24,12 @@
 name: Security
 
 on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
   schedule:
     - cron: "30 3 * * *"
   workflow_dispatch:
@@ -57,7 +63,9 @@ jobs:
             --root "$RUNNER_TEMP/cargo-audit"
 
       - name: Save cargo-audit
-        if: steps.audit-cache.outputs.cache-hit != 'true'
+        if: >-
+          ${{ steps.audit-cache.outputs.cache-hit != 'true' &&
+              github.event_name != 'pull_request' }}
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: ${{ runner.temp }}/cargo-audit/bin/cargo-audit
@@ -65,3 +73,17 @@ jobs:
 
       - name: Audit dependencies
         run: '"$RUNNER_TEMP/cargo-audit/bin/cargo-audit" audit'
+
+  release-audit:
+    name: Release audit
+    if: >-
+      ${{ always() && github.event_name == 'pull_request' &&
+          startsWith(github.event.pull_request.head.ref, 'release/') }}
+    needs: audit
+    permissions: {}
+    runs-on: ubuntu-26.04
+    steps:
+      - name: Require successful audit
+        env:
+          AUDIT_RESULT: ${{ needs.audit.result }}
+        run: test "$AUDIT_RESULT" = success

@@ -73,17 +73,3 @@ jobs:
 
       - name: Audit dependencies
         run: '"$RUNNER_TEMP/cargo-audit/bin/cargo-audit" audit'
-
-  release-audit:
-    name: Release audit
-    if: >-
-      ${{ always() && github.event_name == 'pull_request' &&
-          startsWith(github.event.pull_request.head.ref, 'release/') }}
-    needs: audit
-    permissions: {}
-    runs-on: ubuntu-26.04
-    steps:
-      - name: Require successful audit
-        env:
-          AUDIT_RESULT: ${{ needs.audit.result }}
-        run: test "$AUDIT_RESULT" = success

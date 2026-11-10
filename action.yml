@@ -23,20 +23,27 @@
 
 name: Set up mono
 description: Download and unpack the mono binary for CI
+inputs:
+  version:
+    description: Version to install
+    default: latest
 runs:
   using: composite
   steps:
     - shell: bash
-      # Only a new runner-controlled directory is added to PATH.
+      env:
+        VERSION: ${{ inputs.version }}
       run: | # zizmor: ignore[github-env]
         set -e
         ASSET="mono-linux-x64.tar.gz"
-        VERSION=$(curl -s \
-          https://api.github.com/repos/zensical/mono/releases/latest | \
-          jq -r .tag_name)
         MONO_BIN_DIR=$(mktemp -d "$RUNNER_TEMP/mono.XXXXXX")
-        BASE_URL=https://github.com/zensical/mono/releases/download
-        curl -sSL "$BASE_URL/$VERSION/$ASSET" -o "$MONO_BIN_DIR/mono.tar.gz"
+        BASE_URL=https://github.com/zensical/mono/releases
+        if [ "$VERSION" = latest ]; then
+          URL="$BASE_URL/latest/download/$ASSET"
+        else
+          URL="$BASE_URL/download/v${VERSION#v}/$ASSET"
+        fi
+        curl -fsSL --retry 3 "$URL" -o "$MONO_BIN_DIR/mono.tar.gz"
         tar -xzf "$MONO_BIN_DIR/mono.tar.gz" -C "$MONO_BIN_DIR"
         chmod +x "$MONO_BIN_DIR/mono"
         echo "$MONO_BIN_DIR" >> "$GITHUB_PATH"

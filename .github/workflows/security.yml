@@ -56,6 +56,12 @@ jobs:
           path: ${{ runner.temp }}/cargo-audit/bin/cargo-audit
           key: cargo-audit-0.22.2-${{ runner.os }}-${{ runner.arch }}
 
+      - name: Set up Rust
+        if: steps.audit-cache.outputs.cache-hit != 'true'
+        uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # v1
+        with:
+          toolchain: stable
+
       - name: Install cargo-audit
         if: steps.audit-cache.outputs.cache-hit != 'true'
         run: |

@@ -27,8 +27,8 @@
 
 use serde_json::{Map, Value};
 
-use crate::project::workspace::Versions;
 use crate::project::Result;
+use crate::project::workspace::Versions;
 
 // ----------------------------------------------------------------------------
 // Functions

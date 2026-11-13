@@ -28,11 +28,11 @@
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 
-use crate::project::manifest::Manifest;
 use crate::project::Project;
+use crate::project::manifest::Manifest;
 
-use super::error::{Error, Result};
 use super::Workspace;
+use super::error::{Error, Result};
 
 // ----------------------------------------------------------------------------
 // Structs

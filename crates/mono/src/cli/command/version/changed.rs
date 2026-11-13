@@ -30,11 +30,11 @@ use semver::Version;
 use std::cmp;
 
 use mono_changeset::Changeset;
-use mono_project::version::{Increment, VersionExt};
 use mono_project::Manifest;
+use mono_project::version::{Increment, VersionExt};
 
-use crate::cli::{Command, Result};
 use crate::Context;
+use crate::cli::{Command, Result};
 
 // ----------------------------------------------------------------------------
 // Structs

@@ -29,8 +29,8 @@ use clap::Args;
 
 use mono_project::Manifest;
 
-use crate::cli::{Command, Result};
 use crate::Context;
+use crate::cli::{Command, Result};
 
 // ----------------------------------------------------------------------------
 // Structs

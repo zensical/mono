@@ -27,8 +27,8 @@
 
 use std::fmt::{self, Display};
 
-use crate::changeset::change::Kind;
 use crate::changeset::Change;
+use crate::changeset::change::Kind;
 
 // ----------------------------------------------------------------------------
 // Enums

@@ -27,9 +27,9 @@
 
 use std::fmt::{self, Debug, Display};
 
+use super::Repository;
 use super::error::Result;
 use super::id::Id;
-use super::Repository;
 
 mod delta;
 mod iter;

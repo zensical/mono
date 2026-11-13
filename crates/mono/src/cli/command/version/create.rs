@@ -33,11 +33,11 @@ use std::{fs, process};
 use tempfile::NamedTempFile;
 
 use mono_changeset::Changeset;
-use mono_project::version::VersionExt;
 use mono_project::Manifest;
+use mono_project::version::VersionExt;
 
-use crate::cli::{Command, Result};
 use crate::Context;
+use crate::cli::{Command, Result};
 
 // ----------------------------------------------------------------------------
 // Structs

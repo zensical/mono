@@ -25,8 +25,8 @@
 
 //! Iterator over deltas in a commit.
 
-use crate::repository::commit::Commit;
 use crate::repository::Result;
+use crate::repository::commit::Commit;
 
 use super::Delta;
 

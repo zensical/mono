@@ -25,9 +25,9 @@
 
 //! Command line interface.
 
-use clap::builder::styling::{AnsiColor, Effects};
-use clap::builder::Styles;
 use clap::Parser;
+use clap::builder::Styles;
+use clap::builder::styling::{AnsiColor, Effects};
 use std::collections::BTreeMap;
 use std::path::PathBuf;
 use std::{env, process};

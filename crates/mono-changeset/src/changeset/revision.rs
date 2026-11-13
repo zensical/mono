@@ -31,9 +31,9 @@ use std::str::FromStr;
 
 use mono_repository::Commit;
 
+use super::Changeset;
 use super::change::Change;
 use super::error::Result;
-use super::Changeset;
 
 // ----------------------------------------------------------------------------
 // Structs

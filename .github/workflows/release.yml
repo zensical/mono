@@ -71,9 +71,9 @@ jobs:
         env:
           RELEASE_BRANCH: ${{ github.event.pull_request.head.ref }}
         run: |
-          VERSION=${RELEASE_BRANCH#release/}
-          git check-ref-format "refs/tags/$VERSION"
-          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          version=${RELEASE_BRANCH#release/}
+          git check-ref-format "refs/tags/$version"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
 
       - name: Create and push tag
         env:
@@ -83,7 +83,7 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           if git show-ref --verify --quiet "refs/tags/$VERSION"; then
             test "$(git rev-parse "$VERSION^{commit}")" = \
-              "$(git rev-parse HEAD^{commit})"
+              "$(git rev-parse 'HEAD^{commit}')"
           else
             git tag -a -m "Release $VERSION" -- "$VERSION"
           fi
@@ -108,7 +108,7 @@ jobs:
           fetch-tags: true
 
       - name: Set up mono
-        uses: zensical/mono@2be38f5a76677c8e5c342f269b78aaccc8631b7c # v0
+        uses: zensical/mono@c6ece01fa0d0b2f46300e5998b1f07a5b77be616
 
       - name: Download artifacts
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
@@ -191,7 +191,7 @@ jobs:
           fetch-tags: true
 
       - name: Set up mono
-        uses: zensical/mono@2be38f5a76677c8e5c342f269b78aaccc8631b7c # v0
+        uses: zensical/mono@c6ece01fa0d0b2f46300e5998b1f07a5b77be616
 
       - name: Sign in to crates.io
         id: crates

@@ -35,15 +35,15 @@ runs:
         VERSION: ${{ inputs.version }}
       run: | # zizmor: ignore[github-env]
         set -e
-        ASSET="mono-linux-x64.tar.gz"
-        MONO_BIN_DIR=$(mktemp -d "$RUNNER_TEMP/mono.XXXXXX")
-        BASE_URL=https://github.com/zensical/mono/releases
+        file="mono-linux-x64.tar.gz"
+        mono_bin_dir=$(mktemp -d "$RUNNER_TEMP/mono.XXXXXX")
+        base_url=https://github.com/zensical/mono/releases
         if [ "$VERSION" = latest ]; then
-          URL="$BASE_URL/latest/download/$ASSET"
+          url="$base_url/latest/download/$file"
         else
-          URL="$BASE_URL/download/v${VERSION#v}/$ASSET"
+          url="$base_url/download/v${VERSION#v}/$file"
         fi
-        curl -fsSL --retry 3 "$URL" -o "$MONO_BIN_DIR/mono.tar.gz"
-        tar -xzf "$MONO_BIN_DIR/mono.tar.gz" -C "$MONO_BIN_DIR"
-        chmod +x "$MONO_BIN_DIR/mono"
-        echo "$MONO_BIN_DIR" >> "$GITHUB_PATH"
+        curl -fsSL --retry 3 "$url" -o "$mono_bin_dir/mono.tar.gz"
+        tar -xzf "$mono_bin_dir/mono.tar.gz" -C "$mono_bin_dir"
+        chmod +x "$mono_bin_dir/mono"
+        echo "$mono_bin_dir" >> "$GITHUB_PATH"

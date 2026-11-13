@@ -84,7 +84,7 @@ jobs:
                 github.ref == 'refs/heads/master' }}
 
       - name: Run clippy
-        run: cargo clippy --locked -- -D warnings
+        run: cargo clippy --locked --workspace --all-targets -- -D warnings
 
   msrv:
     name: Minimum Rust version
@@ -184,12 +184,13 @@ jobs:
           fetch-depth: 0
 
       - name: Check commit count
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD: ${{ github.event.pull_request.head.sha }}
         run: |
-          BASE="${{ github.event.pull_request.base.sha }}"
-          HEAD="${{ github.event.pull_request.head.sha }}"
-          COMMITS=$(git rev-list --count $HEAD ^$BASE)
-          if [ "$COMMITS" -ne 1 ]; then
+          commits=$(git rev-list --count "$HEAD" "^$BASE")
+          if [ "$commits" -ne 1 ]; then
             echo "Release branch must contain exactly one commit," \
-              "found $COMMITS"
+              "found $commits"
             exit 1
           fi

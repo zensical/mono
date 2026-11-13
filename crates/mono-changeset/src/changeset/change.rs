@@ -374,7 +374,7 @@ mod tests {
         fn ignores_reference_with_trailing_text() {
             let change = Change::from_str("fix: summary (#1), extra").unwrap();
             assert_eq!(change.summary, "summary (#1), extra");
-            assert!(change.references.is_empty());
+            assert_eq!(change.references, Vec::<u32>::new());
         }
     }
 }

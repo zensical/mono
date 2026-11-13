@@ -169,13 +169,24 @@ jobs:
 
   release:
     name: Release
-    if: |
-      startsWith(github.event.pull_request.head.ref, 'release/')
+    if: always() && startsWith(github.head_ref, 'release/')
+    needs:
+      - clippy
+      - msrv
+      - zizmor
+      - format
     permissions:
       contents: read
     runs-on: ubuntu-26.04
     timeout-minutes: 60
     steps:
+      - name: Check required jobs
+        env:
+          RESULTS: ${{ toJSON(needs) }}
+        run: >-
+          jq -e 'length > 0 and all(.[]; .result == "success")'
+          <<< "$RESULTS"
+
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:

@@ -32,6 +32,19 @@ on:
       - master
 
 permissions: {}
+defaults:
+  run:
+    shell: bash
+
+concurrency:
+  group: >-
+    ${{ github.workflow }}-${{
+        github.event_name == 'pull_request' &&
+        github.event.action != 'closed' &&
+        github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: >-
+    ${{ github.event_name == 'pull_request' &&
+        github.event.action != 'closed' }}
 
 jobs:
   clippy:
@@ -39,6 +52,7 @@ jobs:
     permissions:
       contents: read
     runs-on: ubuntu-26.04
+    timeout-minutes: 60
     steps:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -49,7 +63,8 @@ jobs:
       - name: Set up Rust
         uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # v1
         with:
-          toolchain: stable
+          toolchain: 1.99.1
+          components: clippy
 
       - name: Set up Rust cache
         uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2
@@ -59,13 +74,14 @@ jobs:
                 github.ref == 'refs/heads/master' }}
 
       - name: Run clippy
-        run: cargo clippy -- -D warnings
+        run: cargo clippy --locked -- -D warnings
 
   msrv:
     name: Minimum Rust version
     permissions:
       contents: read
     runs-on: ubuntu-26.04
+    timeout-minutes: 60
     steps:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -86,6 +102,7 @@ jobs:
     permissions:
       contents: read
     runs-on: ubuntu-26.04
+    timeout-minutes: 60
     steps:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -104,6 +121,7 @@ jobs:
     permissions:
       contents: read
     runs-on: ubuntu-26.04
+    timeout-minutes: 60
     steps:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -114,10 +132,11 @@ jobs:
       - name: Set up Rust
         uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # v1
         with:
-          toolchain: stable
+          toolchain: 1.99.1
+          components: rustfmt
 
       - name: Run rustfmt
-        run: find crates -name "*.rs" -exec rustfmt --check {} \;
+        run: cargo fmt --all --check
 
   release:
     name: Release
@@ -126,6 +145,7 @@ jobs:
     permissions:
       contents: read
     runs-on: ubuntu-26.04
+    timeout-minutes: 60
     steps:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7

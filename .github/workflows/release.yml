@@ -83,7 +83,7 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           if git show-ref --verify --quiet "refs/tags/$VERSION"; then
             test "$(git rev-parse "$VERSION^{commit}")" = \
-              "$(git rev-parse HEAD^{commit})"
+              "$(git rev-parse 'HEAD^{commit}')"
           else
             git tag -a -m "Release $VERSION" -- "$VERSION"
           fi

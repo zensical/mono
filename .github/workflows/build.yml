@@ -122,27 +122,37 @@ jobs:
                 github.ref == 'refs/heads/master' }}
 
       - name: Run tests
-        run: cargo test --locked --workspace --target ${{ matrix.target }}
+        env:
+          TARGET: ${{ matrix.target }}
+        run: cargo test --locked --workspace --target "$TARGET"
 
       - name: Build artifact
-        run: cargo build --release --locked --target ${{ matrix.target }}
+        env:
+          TARGET: ${{ matrix.target }}
+        run: cargo build --release --locked --target "$TARGET"
 
       - name: Create artifact archive (Unix)
         if: ${{ contains(matrix.target, 'windows') == false }}
         shell: bash
+        env:
+          TARGET: ${{ matrix.target }}
+          ARTIFACT: ${{ matrix.artifact }}
         run: |
           mkdir -p artifacts
-          tar -czf artifacts/mono-${{ matrix.artifact }}.tar.gz -C \
-            target/${{ matrix.target }}/release mono
+          tar -czf "artifacts/mono-$ARTIFACT.tar.gz" -C \
+            "target/$TARGET/release" mono
 
       - name: Create artifact archive (Windows)
         if: ${{ contains(matrix.target, 'windows') == true }}
         shell: pwsh
+        env:
+          TARGET: ${{ matrix.target }}
+          ARTIFACT: ${{ matrix.artifact }}
         run: |
           mkdir -p artifacts
           Compress-Archive `
-            -Path target/${{ matrix.target }}/release/mono.exe `
-            -DestinationPath artifacts/mono-${{ matrix.artifact }}.zip
+            -Path "target/$env:TARGET/release/mono.exe" `
+            -DestinationPath "artifacts/mono-$env:ARTIFACT.zip"
 
       - name: Upload artifact
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7

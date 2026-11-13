@@ -71,9 +71,9 @@ jobs:
         env:
           RELEASE_BRANCH: ${{ github.event.pull_request.head.ref }}
         run: |
-          VERSION=${RELEASE_BRANCH#release/}
-          git check-ref-format "refs/tags/$VERSION"
-          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          version=${RELEASE_BRANCH#release/}
+          git check-ref-format "refs/tags/$version"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
 
       - name: Create and push tag
         env:

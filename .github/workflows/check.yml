@@ -188,9 +188,9 @@ jobs:
           BASE: ${{ github.event.pull_request.base.sha }}
           HEAD: ${{ github.event.pull_request.head.sha }}
         run: |
-          COMMITS=$(git rev-list --count "$HEAD" "^$BASE")
-          if [ "$COMMITS" -ne 1 ]; then
+          commits=$(git rev-list --count "$HEAD" "^$BASE")
+          if [ "$commits" -ne 1 ]; then
             echo "Release branch must contain exactly one commit," \
-              "found $COMMITS"
+              "found $commits"
             exit 1
           fi

@@ -32,12 +32,12 @@ use std::path::PathBuf;
 use std::str::FromStr;
 use std::{fs, process};
 
-use mono_changeset::change::{Error, Kind};
 use mono_changeset::Change;
+use mono_changeset::change::{Error, Kind};
 use mono_project::Manifest;
 
-use crate::cli::{Command, Result};
 use crate::Context;
+use crate::cli::{Command, Result};
 
 // ----------------------------------------------------------------------------
 // Structs

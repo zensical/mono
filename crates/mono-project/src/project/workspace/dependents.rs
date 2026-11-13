@@ -26,12 +26,12 @@
 //! Workspace dependents.
 
 use std::ops::Index;
+use zrx::graph::Graph;
 use zrx::graph::iter::{Sinks, Sources};
 use zrx::graph::traversal::IntoIter;
-use zrx::graph::Graph;
 
-use crate::project::manifest::Manifest;
 use crate::project::Project;
+use crate::project::manifest::Manifest;
 
 use super::{Result, Workspace};
 

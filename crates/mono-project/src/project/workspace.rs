@@ -25,12 +25,12 @@
 
 //! Workspace.
 
-use std::collections::btree_map::Values;
 use std::collections::BTreeMap;
+use std::collections::btree_map::Values;
 use std::path::{Path, PathBuf};
 
-use super::manifest::{Manifest, ManifestFile};
 use super::Project;
+use super::manifest::{Manifest, ManifestFile};
 
 mod builder;
 mod dependents;

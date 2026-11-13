@@ -29,13 +29,13 @@ use clap::Args;
 use semver::Version;
 use std::borrow::Cow;
 
-use mono_changeset::changelog::Options;
 use mono_changeset::Changeset;
-use mono_project::version::VersionExt;
+use mono_changeset::changelog::Options;
 use mono_project::Manifest;
+use mono_project::version::VersionExt;
 
-use crate::cli::{Command, Result};
 use crate::Context;
+use crate::cli::{Command, Result};
 
 // ----------------------------------------------------------------------------
 // Structs

@@ -26,10 +26,10 @@
 //! Cargo manifest update.
 
 use semver::Version;
-use toml_edit::{value, DocumentMut, Item};
+use toml_edit::{DocumentMut, Item, value};
 
-use crate::project::workspace::Versions;
 use crate::project::Result;
+use crate::project::workspace::Versions;
 
 // ----------------------------------------------------------------------------
 // Functions

@@ -28,9 +28,9 @@
 use std::collections::BTreeMap;
 use std::fmt::{self, Display};
 
+use super::Changeset;
 use super::revision::Revision;
 use super::scopes::Scopes;
-use super::Changeset;
 
 mod options;
 mod section;

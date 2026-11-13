@@ -26,16 +26,16 @@
 //! Version set.
 
 use semver::Version;
-use std::collections::btree_map::{Iter, Range};
 use std::collections::BTreeMap;
+use std::collections::btree_map::{Iter, Range};
 use std::fmt::{self, Debug};
 use std::iter::Rev;
 use std::ops::RangeBounds;
 
+use super::Repository;
 use super::commit::Commits;
 use super::error::{Error, Result};
 use super::id::Id;
-use super::Repository;
 
 // ----------------------------------------------------------------------------
 // Structs

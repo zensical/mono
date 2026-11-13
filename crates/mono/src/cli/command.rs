@@ -29,8 +29,8 @@ use clap::Subcommand;
 
 use mono_project::Manifest;
 
-use crate::cli::Result;
 use crate::Context;
+use crate::cli::Result;
 
 mod list;
 mod validate;

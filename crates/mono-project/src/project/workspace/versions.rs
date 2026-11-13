@@ -32,8 +32,8 @@ use std::fs;
 use crate::project::manifest::Manifest;
 use crate::project::version::{Increment, VersionExt};
 
-use super::error::Result;
 use super::Workspace;
+use super::error::Result;
 
 // ----------------------------------------------------------------------------
 // Structs

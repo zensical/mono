@@ -27,9 +27,9 @@
 
 use mono_project::{Manifest, Workspace};
 
+use super::Scopes;
 use super::builder::Builder;
 use super::error::Result;
-use super::Scopes;
 
 // ----------------------------------------------------------------------------
 // Traits

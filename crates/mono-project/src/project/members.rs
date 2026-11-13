@@ -27,9 +27,9 @@
 
 use std::marker::PhantomData;
 
+use super::Project;
 use super::error::Result;
 use super::manifest::{Manifest, ManifestFile};
-use super::Project;
 
 mod paths;
 

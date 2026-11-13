@@ -28,8 +28,8 @@
 use globset::{Glob, GlobSetBuilder};
 use std::path::{Path, PathBuf};
 
-use super::error::{Error, Result};
 use super::Scopes;
+use super::error::{Error, Result};
 
 // ----------------------------------------------------------------------------
 // Structs

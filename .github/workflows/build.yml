@@ -102,6 +102,17 @@ jobs:
           toolchain: 1.99.1
           targets: ${{ matrix.target }}
 
+      - name: Remove unused Rust toolchains
+        run: |
+          # rust-cache fingerprints every installed toolchain.
+          active="$(rustup show active-toolchain)"
+          active="${active%% *}"
+          rustup toolchain list --quiet | while read -r toolchain; do
+            if [ "$toolchain" != "$active" ]; then
+              rustup toolchain uninstall "$toolchain"
+            fi
+          done
+
       - name: Set up Rust cache
         uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2
         with:

@@ -104,7 +104,6 @@ jobs:
 
       - name: Remove unused Rust toolchains
         run: |
-          # rust-cache fingerprints every installed toolchain.
           active="$(rustup show active-toolchain)"
           active="${active%% *}"
           rustup toolchain list --quiet | while read -r toolchain; do

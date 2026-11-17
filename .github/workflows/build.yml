@@ -88,7 +88,6 @@ jobs:
             artifact: macos-arm64
             os: macos-15
             target: aarch64-apple-darwin
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
